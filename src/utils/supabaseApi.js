@@ -366,6 +366,29 @@ export const getUnreadMessageCount = async (userId) => {
   return count || 0
 }
 
+// 獲取特定對話的未讀訊息數量（管理員用）
+export const getUnreadCountForConversation = async (conversationId, adminId) => {
+  const { count, error } = await supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('conversation_id', conversationId)
+    .eq('is_read', false)
+    .neq('sender_id', adminId) // 不計算管理員自己發送的訊息
+  
+  if (error) throw error
+  return count || 0
+}
+
+// 刪除訊息（僅管理員）
+export const deleteMessage = async (messageId) => {
+  const { error } = await supabase
+    .from('messages')
+    .delete()
+    .eq('id', messageId)
+  
+  if (error) throw error
+}
+
 // 訂閱訊息變更（Realtime）
 export const subscribeMessages = (conversationId, onChange) => {
   // 使用唯一的 channel 名稱，包含時間戳以避免衝突
@@ -375,16 +398,14 @@ export const subscribeMessages = (conversationId, onChange) => {
     .on(
       'postgres_changes',
       { 
-        event: 'INSERT',  // 只監聽 INSERT 事件，避免重複觸發
+        event: '*',  // 監聽所有事件（INSERT, UPDATE, DELETE）
         schema: 'public', 
         table: 'messages',
         filter: `conversation_id=eq.${conversationId}`
       },
       (payload) => {
-        // 確保只處理 INSERT 事件
-        if (payload.eventType === 'INSERT') {
-          onChange?.(payload)
-        }
+        // 處理所有事件類型
+        onChange?.(payload)
       }
     )
     .subscribe((status) => {
