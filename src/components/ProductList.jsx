@@ -141,35 +141,42 @@ function ProductList({ onCartUpdate }) {
           </p>
         </div>
       ) : (
-        <div className="products-list">
+        <div className="products-grid">
           {filteredProducts.map(product => (
             <Link 
               key={product.id} 
               to={`/product/${product.id}`}
-              className="product-item-link"
+              className="product-card-link"
             >
-              <div className="product-item">
-                <div className="product-icon">
+              <div className="product-card">
+                <div className="product-image-wrapper">
                   <img 
                     src={product.image} 
                     alt={product.name}
+                    className="product-image"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/60x60?text=No+Image'
+                      e.target.src = 'https://via.placeholder.com/200x200?text=No+Image'
                     }}
                   />
-                </div>
-                <div className="product-info">
-                  <div className="product-header">
-                    <h3 className="product-name">{product.name}</h3>
-                    <div className="product-category">{product.category}</div>
+                  <div className="shipping-tags">
+                    <span className="shipping-tag tag-1">店取.199免運</span>
+                    <span className="shipping-tag tag-2">宅配.490免運</span>
                   </div>
-                  <div className="product-footer">
-                    <div className="product-price">NT$ {product.price.toLocaleString()}</div>
-                    <div className="product-stock">庫存：{product.stock} 件</div>
+                </div>
+                <div className="product-card-info">
+                  <span className="preferred-badge">蝦皮優選</span>
+                  <h3 className="product-card-name">{product.name}</h3>
+                  <div className="product-rating-row">
+                    <span className="product-rating">⭐ 5.0</span>
+                    <span className="delivery-tag">隔日到貨</span>
+                  </div>
+                  <div className="product-price-row">
+                    <span className="product-card-price">${product.price.toLocaleString()}</span>
+                    <span className="product-sales">已售 {product.stock > 0 ? '92+' : '0'}</span>
                   </div>
                 </div>
                 {isAdmin && (
-                  <div className="product-admin-actions" onClick={(e) => e.stopPropagation()}>
+                  <div className="product-admin-actions-card" onClick={(e) => e.stopPropagation()}>
                     <Link
                       to={`/edit/${product.id}`}
                       className="btn btn-secondary btn-sm"
