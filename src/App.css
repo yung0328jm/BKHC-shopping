@@ -442,35 +442,42 @@
 @media (max-width: 768px) {
   .nav-container {
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
     padding: 0.75rem 1rem;
   }
 
   .logo {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 
   .logo-dog {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .nav-links {
     width: 100%;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.4rem;
     justify-content: center;
+    align-items: center;
   }
 
   .nav-link {
-    padding: 0.6rem 0.8rem;
-    font-size: 1.5rem;
+    padding: 0.5rem 0.6rem;
+    font-size: 1.1rem;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .nav-link::before {
-    font-size: 1rem;
-    top: -6px;
-    right: -4px;
+    font-size: 0.85rem;
+    top: -5px;
+    right: -3px;
+  }
+
+  .user-info {
+    font-size: 1.1rem !important;
+    padding: 0.5rem 0.6rem;
   }
 
   .separator {
@@ -480,34 +487,51 @@
   .main-content {
     padding: 1rem;
   }
+
+  .cart-badge {
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    top: -6px;
+    right: -6px;
+  }
 }
 
 @media (max-width: 480px) {
   .nav-container {
-    padding: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
   }
 
   .logo {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
 
   .logo-dog {
-    font-size: 2rem;
+    font-size: 1.6rem;
   }
 
   .nav-links {
-    gap: 0.4rem;
+    gap: 0.3rem;
+    justify-content: center;
   }
 
   .nav-link {
-    padding: 0.5rem 0.7rem;
-    font-size: 1.3rem;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.95rem;
+    line-height: 1.3;
   }
 
   .nav-link::before {
-    font-size: 0.9rem;
-    top: -5px;
-    right: -3px;
+    font-size: 0.75rem;
+    top: -4px;
+    right: -2px;
+    opacity: 0.4;
+  }
+
+  .user-info {
+    font-size: 0.95rem !important;
+    padding: 0.4rem 0.5rem;
   }
 
   .main-content {
@@ -515,7 +539,19 @@
   }
 
   .dog {
-    font-size: 2.5rem;
+    font-size: 2rem;
+  }
+
+  .paw-print {
+    font-size: 1rem;
+  }
+
+  .cart-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 0.65rem;
+    top: -5px;
+    right: -5px;
   }
 }
 
