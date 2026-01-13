@@ -203,3 +203,134 @@ export const deleteOrderById = async (orderId) => {
   if (error) throw error
 }
 
+// Chat - Conversations
+export const getOrCreateUserConversation = async (userId) => {
+  // 先嘗試獲取現有對話
+  const { data: existing, error: fetchError } = await supabase
+    .from('conversations')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  if (existing) {
+    return existing
+  }
+
+  // 如果不存在，創建新對話
+  const { data: newConv, error: createError } = await supabase
+    .from('conversations')
+    .insert({ user_id: userId })
+    .select()
+    .single()
+
+  if (createError) throw createError
+  return newConv
+}
+
+export const getAllConversations = async () => {
+  const { data, error } = await supabase
+    .from('conversations')
+    .select(`
+      *,
+      user:profiles!conversations_user_id_fkey(id, username, email, display_name)
+    `)
+    .order('last_message_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export const getConversationById = async (conversationId) => {
+  const { data, error } = await supabase
+    .from('conversations')
+    .select(`
+      *,
+      user:profiles!conversations_user_id_fkey(id, username, email, display_name)
+    `)
+    .eq('id', conversationId)
+    .single()
+  if (error) throw error
+  return data
+}
+
+// Chat - Messages
+export const getMessagesByConversation = async (conversationId) => {
+  const { data, error } = await supabase
+    .from('messages')
+    .select(`
+      *,
+      sender:profiles!messages_sender_id_fkey(id, username, email, display_name, is_admin)
+    `)
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data || []
+}
+
+export const sendMessage = async (conversationId, senderId, content) => {
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      content: content.trim()
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export const markMessagesAsRead = async (conversationId, userId) => {
+  const { error } = await supabase
+    .from('messages')
+    .update({ is_read: true })
+    .eq('conversation_id', conversationId)
+    .neq('sender_id', userId) // 不標記自己發送的訊息為已讀
+  if (error) throw error
+}
+
+export const getUnreadMessageCount = async (userId) => {
+  // 先獲取用戶的對話 ID
+  const { data: conversations, error: convError } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('user_id', userId)
+  
+  if (convError) throw convError
+  if (!conversations || conversations.length === 0) return 0
+  
+  const conversationIds = conversations.map(c => c.id)
+  
+  // 獲取未讀訊息數量
+  const { count, error } = await supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_read', false)
+    .neq('sender_id', userId)
+    .in('conversation_id', conversationIds)
+  
+  if (error) throw error
+  return count || 0
+}
+
+// 訂閱訊息變更（Realtime）
+export const subscribeMessages = (conversationId, onChange) => {
+  const channel = supabase
+    .channel(`messages-${conversationId}`)
+    .on(
+      'postgres_changes',
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`
+      },
+      (payload) => onChange?.(payload)
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
