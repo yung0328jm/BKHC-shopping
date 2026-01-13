@@ -48,32 +48,78 @@
 .chat-header-title-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 1.5rem;
   margin-bottom: 0.25rem;
-}
-
-.chat-header-title {
-  font-weight: 500;
-  font-size: 1.5rem;
-  color: #ff6b6b;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', 'Helvetica Neue', Arial, sans-serif;
-  letter-spacing: 0.05em;
-  text-shadow: 0 2px 4px rgba(255, 107, 107, 0.2);
+  position: relative;
+  min-height: 2rem;
 }
 
 .shopping-cart-icon {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   display: inline-block;
-  animation: cartMove 2s ease-in-out infinite;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  position: absolute;
 }
 
-@keyframes cartMove {
+.shopping-cart-icon.cart-1 {
+  animation: cartMove1 3s ease-in-out infinite;
+  left: 20%;
+}
+
+.shopping-cart-icon.cart-2 {
+  animation: cartMove2 2.5s ease-in-out infinite;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.shopping-cart-icon.cart-3 {
+  animation: cartMove3 3.5s ease-in-out infinite;
+  right: 20%;
+}
+
+@keyframes cartMove1 {
   0%, 100% {
-    transform: translateX(0);
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(15px, -10px) rotate(5deg);
   }
   50% {
-    transform: translateX(10px);
+    transform: translate(-10px, 5px) rotate(-5deg);
+  }
+  75% {
+    transform: translate(10px, 8px) rotate(3deg);
+  }
+}
+
+@keyframes cartMove2 {
+  0%, 100% {
+    transform: translate(-50%, 0) rotate(0deg);
+  }
+  33% {
+    transform: translate(-50%, -12px) rotate(-8deg);
+  }
+  66% {
+    transform: translate(-50%, 8px) rotate(8deg);
+  }
+}
+
+@keyframes cartMove3 {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  20% {
+    transform: translate(-12px, -8px) rotate(-6deg);
+  }
+  40% {
+    transform: translate(8px, 10px) rotate(6deg);
+  }
+  60% {
+    transform: translate(-5px, -5px) rotate(-3deg);
+  }
+  80% {
+    transform: translate(10px, 0) rotate(4deg);
   }
 }
 
