@@ -19,6 +19,7 @@ function AdminChat() {
   const messagesEndRef = useRef(null)
   const currentUserId = useRef(null)
   const unsubscribeRef = useRef(null)
+  const processedMessageIds = useRef(new Set())
 
   useEffect(() => {
     loadConversations()
@@ -28,10 +29,18 @@ function AdminChat() {
   }, [])
 
   useEffect(() => {
-    if (selectedConversation) {
-      loadMessages(selectedConversation.id)
-      markMessagesAsRead(selectedConversation.id, currentUserId.current)
+    if (!selectedConversation?.id) return
+    
+    const conversationId = selectedConversation.id
+    
+    // 清理舊訂閱
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current()
+      unsubscribeRef.current = null
     }
+    
+    loadMessages(conversationId)
+    markMessagesAsRead(conversationId, currentUserId.current)
     
     // 清理訂閱
     return () => {
@@ -40,7 +49,7 @@ function AdminChat() {
         unsubscribeRef.current = null
       }
     }
-  }, [selectedConversation])
+  }, [selectedConversation?.id]) // 只依賴 selectedConversation.id，避免對象引用變化導致重複執行
 
   const loadConversations = async () => {
     try {
@@ -66,7 +75,12 @@ function AdminChat() {
         unsubscribeRef.current = null
       }
       
+      // 重置已處理訊息 ID 集合
+      processedMessageIds.current.clear()
+      
       const data = await getMessagesByConversation(conversationId)
+      // 將已載入的訊息 ID 加入集合
+      data.forEach(msg => processedMessageIds.current.add(msg.id))
       setMessages(data)
       
       // 訂閱新訊息
@@ -74,42 +88,42 @@ function AdminChat() {
         if (payload.eventType === 'INSERT') {
           const newMsg = payload.new
           
-          // 檢查訊息是否已存在（避免重複）
-          setMessages(prev => {
-            const exists = prev.some(msg => msg.id === newMsg.id)
-            if (exists) return prev
-            
-            // 獲取新訊息的發送者資訊
-            supabase
+          // 使用 Set 檢查是否已處理過（更可靠）
+          if (processedMessageIds.current.has(newMsg.id)) {
+            return
+          }
+          
+          // 標記為已處理
+          processedMessageIds.current.add(newMsg.id)
+          
+          // 獲取新訊息的發送者資訊
+          try {
+            const { data: profile } = await supabase
               .from('profiles')
               .select('id, username, email, display_name, is_admin')
               .eq('id', newMsg.sender_id)
               .single()
-              .then(({ data: profile }) => {
-                setMessages(prevMsgs => {
-                  // 再次檢查是否已存在
-                  if (prevMsgs.some(msg => msg.id === newMsg.id)) {
-                    return prevMsgs
-                  }
-                  return [...prevMsgs, {
-                    ...newMsg,
-                    sender: profile || { id: newMsg.sender_id }
-                  }]
-                })
-                markMessagesAsRead(conversationId, currentUserId.current)
-              })
-              .catch(() => {
-                // 如果獲取發送者資訊失敗，仍然添加訊息
-                setMessages(prevMsgs => {
-                  if (prevMsgs.some(msg => msg.id === newMsg.id)) {
-                    return prevMsgs
-                  }
-                  return [...prevMsgs, newMsg]
-                })
-              })
             
-            return prev
-          })
+            // 再次檢查（防止競態條件）
+            setMessages(prevMsgs => {
+              if (prevMsgs.some(msg => msg.id === newMsg.id)) {
+                return prevMsgs
+              }
+              return [...prevMsgs, {
+                ...newMsg,
+                sender: profile || { id: newMsg.sender_id }
+              }]
+            })
+            markMessagesAsRead(conversationId, currentUserId.current)
+          } catch (err) {
+            // 如果獲取發送者資訊失敗，仍然添加訊息
+            setMessages(prevMsgs => {
+              if (prevMsgs.some(msg => msg.id === newMsg.id)) {
+                return prevMsgs
+              }
+              return [...prevMsgs, newMsg]
+            })
+          }
         }
       })
 
