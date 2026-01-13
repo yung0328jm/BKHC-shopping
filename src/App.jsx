@@ -13,6 +13,8 @@ import UserOrders from './components/UserOrders'
 import AdminSettings from './components/AdminSettings'
 import OrderManagement from './components/OrderManagement'
 import AnnouncementEditor from './components/AnnouncementEditor'
+import AdminChat from './components/AdminChat'
+import UserChat from './components/UserChat'
 import ProtectedRoute from './components/ProtectedRoute'
 import UserProtectedRoute from './components/UserProtectedRoute'
 import EnvCheck from './components/EnvCheck'
@@ -150,19 +152,22 @@ function AppContent() {
               <span className="logo-char">缺</span>
             </h1>
             <span className="logo-dog logo-dog-right">🐶</span>
+            {isUser && (
+              <span className="user-info-top">
+                {currentUser?.username}
+              </span>
+            )}
           </Link>
           <div className="nav-links">
             <Link to="/" className="nav-link">商品列表</Link>
             <Link to="/cart" className="nav-link cart-link">
-              🛒 購物車
+              購物車
               {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
             </Link>
             {isUser ? (
               <>
                 <Link to="/orders" className="nav-link">我的訂單</Link>
-                <span className="nav-link user-info">
-                  👤 {currentUser?.username}
-                </span>
+                <Link to="/chat" className="nav-link">💬 聯絡客服</Link>
                 <Link to="/" className="nav-link" onClick={handleUserLogout}>
                   登出
                 </Link>
@@ -178,6 +183,7 @@ function AppContent() {
                 <span className="nav-link separator">|</span>
                 <Link to="/add" className="nav-link">上架商品</Link>
                 <Link to="/admin/orders" className="nav-link">訂單管理</Link>
+                <Link to="/admin/chat" className="nav-link">💬 客戶聊天</Link>
                 <Link to="/admin/announcement" className="nav-link">公告編輯</Link>
                 <Link to="/admin/settings" className="nav-link">管理設定</Link>
               </>
@@ -256,6 +262,22 @@ function AppContent() {
                 <ProtectedRoute>
                   <AnnouncementEditor />
                 </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/chat" 
+              element={
+                <ProtectedRoute>
+                  <AdminChat />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/chat" 
+              element={
+                <UserProtectedRoute>
+                  <UserChat />
+                </UserProtectedRoute>
               } 
             />
           </Routes>
