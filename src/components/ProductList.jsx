@@ -158,21 +158,14 @@ function ProductList({ onCartUpdate }) {
                       e.target.src = 'https://via.placeholder.com/200x200?text=No+Image'
                     }}
                   />
-                  <div className="shipping-tags">
-                    <span className="shipping-tag tag-1">店取.199免運</span>
-                    <span className="shipping-tag tag-2">宅配.490免運</span>
-                  </div>
                 </div>
                 <div className="product-card-info">
-                  <span className="preferred-badge">蝦皮優選</span>
-                  <h3 className="product-card-name">{product.name}</h3>
-                  <div className="product-rating-row">
-                    <span className="product-rating">⭐ 5.0</span>
-                    <span className="delivery-tag">隔日到貨</span>
-                  </div>
+                  {product.show_badge && product.badge_label && (
+                    <span className="preferred-badge">{product.badge_label}</span>
+                  )}
                   <div className="product-price-row">
                     <span className="product-card-price">${product.price.toLocaleString()}</span>
-                    <span className="product-sales">已售 {product.stock > 0 ? '92+' : '0'}</span>
+                    <span className="product-stock">庫存：{product.stock} 件</span>
                   </div>
                 </div>
                 {isAdmin && (

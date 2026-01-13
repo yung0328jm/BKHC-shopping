@@ -226,6 +226,12 @@
   font-weight: 500;
 }
 
+.product-stock {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
 .product-admin-actions-card {
   display: flex;
   gap: 0.5rem;

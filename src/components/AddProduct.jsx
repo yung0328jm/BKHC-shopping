@@ -11,7 +11,9 @@ function AddProduct() {
     price: '',
     stock: '',
     category: '',
-    image: ''
+    image: '',
+    badge_label: '',
+    show_badge: false
   })
   const [imagePreview, setImagePreview] = useState(null)
   const [errors, setErrors] = useState({})
@@ -120,7 +122,9 @@ function AddProduct() {
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
         category: formData.category.trim(),
-        image: formData.image || 'https://via.placeholder.com/400x300?text=No+Image'
+        image: formData.image || 'https://via.placeholder.com/400x300?text=No+Image',
+        badge_label: formData.badge_label.trim(),
+        show_badge: formData.show_badge
       }
 
       await insertProduct(product)
@@ -132,7 +136,9 @@ function AddProduct() {
         price: '',
         stock: '',
         category: '',
-        image: ''
+        image: '',
+        badge_label: '',
+        show_badge: false
       })
       setImagePreview(null)
 
@@ -224,6 +230,40 @@ function AddProduct() {
             />
             {errors.category && <span className="error-message">{errors.category}</span>}
           </div>
+
+          <div className="form-group">
+            <label>
+              <input
+                type="checkbox"
+                name="show_badge"
+                checked={formData.show_badge}
+                onChange={(e) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    show_badge: e.target.checked
+                  }))
+                }}
+                style={{ marginRight: '0.5rem' }}
+              />
+              顯示標籤
+            </label>
+          </div>
+
+          {formData.show_badge && (
+            <div className="form-group">
+              <label htmlFor="badge_label">標籤文字</label>
+              <input
+                type="text"
+                id="badge_label"
+                name="badge_label"
+                value={formData.badge_label}
+                onChange={handleChange}
+                placeholder="例如：蝦皮優選、熱銷商品、限時特價等"
+                maxLength={20}
+              />
+              <small className="form-hint">最多 20 個字元</small>
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="imageFile">商品圖片</label>
