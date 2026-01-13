@@ -230,25 +230,58 @@ export const getOrCreateUserConversation = async (userId) => {
 export const getAllConversations = async () => {
   const { data, error } = await supabase
     .from('conversations')
-    .select(`
-      *,
-      user:profiles!conversations_user_id_fkey(id, username, email, display_name)
-    `)
+    .select('*')
     .order('last_message_at', { ascending: false })
+  
   if (error) throw error
+  
+  // 手動獲取用戶資訊
+  if (data && data.length > 0) {
+    const userIds = [...new Set(data.map(c => c.user_id))]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username, email, display_name')
+      .in('id', userIds)
+    
+    const profileMap = {}
+    if (profiles) {
+      profiles.forEach(p => {
+        profileMap[p.id] = p
+      })
+    }
+    
+    return data.map(conv => ({
+      ...conv,
+      user: profileMap[conv.user_id] || { id: conv.user_id }
+    }))
+  }
+  
   return data || []
 }
 
 export const getConversationById = async (conversationId) => {
   const { data, error } = await supabase
     .from('conversations')
-    .select(`
-      *,
-      user:profiles!conversations_user_id_fkey(id, username, email, display_name)
-    `)
+    .select('*')
     .eq('id', conversationId)
     .single()
+  
   if (error) throw error
+  
+  // 手動獲取用戶資訊
+  if (data) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, username, email, display_name')
+      .eq('id', data.user_id)
+      .single()
+    
+    return {
+      ...data,
+      user: profile || { id: data.user_id }
+    }
+  }
+  
   return data
 }
 
@@ -256,13 +289,33 @@ export const getConversationById = async (conversationId) => {
 export const getMessagesByConversation = async (conversationId) => {
   const { data, error } = await supabase
     .from('messages')
-    .select(`
-      *,
-      sender:profiles!messages_sender_id_fkey(id, username, email, display_name, is_admin)
-    `)
+    .select('*')
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true })
+  
   if (error) throw error
+  
+  // 手動獲取發送者資訊
+  if (data && data.length > 0) {
+    const senderIds = [...new Set(data.map(m => m.sender_id))]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username, email, display_name, is_admin')
+      .in('id', senderIds)
+    
+    const profileMap = {}
+    if (profiles) {
+      profiles.forEach(p => {
+        profileMap[p.id] = p
+      })
+    }
+    
+    return data.map(msg => ({
+      ...msg,
+      sender: profileMap[msg.sender_id] || { id: msg.sender_id }
+    }))
+  }
+  
   return data || []
 }
 
