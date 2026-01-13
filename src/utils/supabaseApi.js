@@ -368,21 +368,33 @@ export const getUnreadMessageCount = async (userId) => {
 
 // 訂閱訊息變更（Realtime）
 export const subscribeMessages = (conversationId, onChange) => {
+  // 使用唯一的 channel 名稱，包含時間戳以避免衝突
+  const channelName = `messages-${conversationId}-${Date.now()}`
   const channel = supabase
-    .channel(`messages-${conversationId}`)
+    .channel(channelName)
     .on(
       'postgres_changes',
       { 
-        event: '*', 
+        event: 'INSERT',  // 只監聽 INSERT 事件，避免重複觸發
         schema: 'public', 
         table: 'messages',
         filter: `conversation_id=eq.${conversationId}`
       },
-      (payload) => onChange?.(payload)
+      (payload) => {
+        // 確保只處理 INSERT 事件
+        if (payload.eventType === 'INSERT') {
+          onChange?.(payload)
+        }
+      }
     )
-    .subscribe()
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log(`已訂閱訊息: ${conversationId}`)
+      }
+    })
 
   return () => {
+    console.log(`取消訂閱訊息: ${conversationId}`)
     supabase.removeChannel(channel)
   }
 }
