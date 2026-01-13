@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { getCurrentUserId, getUserProfile } from '../utils/supabaseAuth'
+import { supabase } from '../utils/supabaseClient'
 import { 
   getAllConversations, 
   getMessagesByConversation, 
@@ -54,17 +55,34 @@ function AdminChat() {
       setMessages(data)
       
       // 訂閱新訊息
-      const unsubscribe = subscribeMessages(conversationId, (payload) => {
+      const unsubscribe = subscribeMessages(conversationId, async (payload) => {
         if (payload.eventType === 'INSERT') {
-          setMessages(prev => [...prev, payload.new])
-          markMessagesAsRead(conversationId, currentUserId.current)
+          // 獲取新訊息的發送者資訊
+          const newMessage = payload.new
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('id, username, email, display_name, is_admin')
+              .eq('id', newMessage.sender_id)
+              .single()
+            
+            setMessages(prev => [...prev, {
+              ...newMessage,
+              sender: profile || { id: newMessage.sender_id }
+            }])
+            markMessagesAsRead(conversationId, currentUserId.current)
+          } catch (err) {
+            // 如果獲取發送者資訊失敗，仍然添加訊息
+            setMessages(prev => [...prev, newMessage])
+          }
         }
       })
 
       return unsubscribe
     } catch (error) {
       console.error('載入訊息失敗:', error)
-      alert('載入訊息失敗')
+      const errorMessage = error.message || '載入訊息失敗'
+      alert(`載入訊息失敗：${errorMessage}`)
     }
   }
 
