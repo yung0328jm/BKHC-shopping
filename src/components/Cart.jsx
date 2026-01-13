@@ -77,14 +77,17 @@ function Cart({ onCartUpdate }) {
       // 轉換為數字
       const quantity = parseInt(newQuantity, 10)
 
-      // 驗證輸入
-      if (isNaN(quantity) || quantity <= 0) {
-        await handleRemove(productId)
+      // 找到對應的商品以檢查庫存
+      const item = cartItems.find(item => item.id === productId)
+      
+      // 驗證輸入：如果數量小於1，顯示庫存不足並恢復原值
+      if (isNaN(quantity) || quantity < 1) {
+        alert('庫存不足，數量至少需要 1 件')
+        setEditingQuantity(prev => ({ ...prev, [productId]: item.quantity }))
         return
       }
 
-      // 找到對應的商品以檢查庫存
-      const item = cartItems.find(item => item.id === productId)
+      // 檢查庫存
       if (item && quantity > item.product.stock) {
         alert(`庫存不足，目前僅剩 ${item.product.stock} 件`)
         setEditingQuantity(prev => ({ ...prev, [productId]: item.quantity }))
@@ -126,8 +129,8 @@ function Cart({ onCartUpdate }) {
     }
   }
 
-  const handleRemove = async (productId) => {
-    if (!window.confirm('確定要移除此商品嗎？')) {
+  const handleRemove = async (productId, skipConfirm = false) => {
+    if (!skipConfirm && !window.confirm('確定要移除此商品嗎？')) {
       return
     }
 
@@ -216,7 +219,6 @@ function Cart({ onCartUpdate }) {
                 <button
                   onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                   className="quantity-btn"
-                  disabled={item.quantity <= 1}
                 >
                   −
                 </button>
@@ -227,7 +229,7 @@ function Cart({ onCartUpdate }) {
                   onChange={(e) => handleQuantityInputChange(item.id, e.target.value)}
                   onBlur={() => handleQuantityInputBlur(item.id)}
                   onKeyPress={(e) => handleQuantityInputKeyPress(e, item.id)}
-                  min="1"
+                  min="0"
                   max={item.product.stock}
                 />
                 <button
