@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { changePassword, changeUsername, logout, getCurrentAdmin } from '../utils/auth'
+import { getShippingFee, updateShippingFee } from '../utils/shippingFee'
 import './AdminSettings.css'
 
 function AdminSettings() {
@@ -16,7 +17,21 @@ function AdminSettings() {
     newUsername: '',
     password: ''
   })
+  const [shippingFeeForm, setShippingFeeForm] = useState({
+    fee711: '',
+    feeHome: '',
+    feePickup: ''
+  })
   const [message, setMessage] = useState({ type: '', text: '' })
+
+  useEffect(() => {
+    const shippingFee = getShippingFee()
+    setShippingFeeForm({
+      fee711: shippingFee['711賣貨便'] || '',
+      feeHome: shippingFee['宅配'] || '',
+      feePickup: shippingFee['面交'] || ''
+    })
+  }, [])
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target
@@ -34,6 +49,36 @@ function AdminSettings() {
       [name]: value
     }))
     setMessage({ type: '', text: '' })
+  }
+
+  const handleShippingFeeChange = (e) => {
+    const { name, value } = e.target
+    setShippingFeeForm(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    setMessage({ type: '', text: '' })
+  }
+
+  const handleShippingFeeSubmit = (e) => {
+    e.preventDefault()
+    
+    if (shippingFeeForm.fee711 === '' || shippingFeeForm.feeHome === '' || shippingFeeForm.feePickup === '') {
+      setMessage({ type: 'error', text: '請填寫所有運費欄位' })
+      return
+    }
+
+    const fee711 = parseFloat(shippingFeeForm.fee711)
+    const feeHome = parseFloat(shippingFeeForm.feeHome)
+    const feePickup = parseFloat(shippingFeeForm.feePickup)
+
+    if (isNaN(fee711) || isNaN(feeHome) || isNaN(feePickup) || fee711 < 0 || feeHome < 0 || feePickup < 0) {
+      setMessage({ type: 'error', text: '運費必須為有效的正數或零' })
+      return
+    }
+
+    updateShippingFee(fee711, feeHome, feePickup)
+    setMessage({ type: 'success', text: '運費設定已成功更新！' })
   }
 
   const handlePasswordSubmit = (e) => {
@@ -106,6 +151,12 @@ function AdminSettings() {
             onClick={() => setActiveTab('username')}
           >
             修改用戶名
+          </button>
+          <button
+            className={`tab ${activeTab === 'shipping' ? 'active' : ''}`}
+            onClick={() => setActiveTab('shipping')}
+          >
+            運費設定
           </button>
         </div>
 
@@ -187,6 +238,56 @@ function AdminSettings() {
 
             <button type="submit" className="btn btn-primary">
               修改用戶名
+            </button>
+          </form>
+        )}
+
+        {activeTab === 'shipping' && (
+          <form onSubmit={handleShippingFeeSubmit} className="settings-form">
+            <div className="form-group">
+              <label htmlFor="fee711">711賣貨便運費 (NT$)</label>
+              <input
+                type="number"
+                id="fee711"
+                name="fee711"
+                value={shippingFeeForm.fee711}
+                onChange={handleShippingFeeChange}
+                placeholder="輸入711賣貨便運費"
+                min="0"
+                step="1"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="feeHome">宅配運費 (NT$)</label>
+              <input
+                type="number"
+                id="feeHome"
+                name="feeHome"
+                value={shippingFeeForm.feeHome}
+                onChange={handleShippingFeeChange}
+                placeholder="輸入宅配運費"
+                min="0"
+                step="1"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="feePickup">面交運費 (NT$)</label>
+              <input
+                type="number"
+                id="feePickup"
+                name="feePickup"
+                value={shippingFeeForm.feePickup}
+                onChange={handleShippingFeeChange}
+                placeholder="輸入面交運費（通常為0）"
+                min="0"
+                step="1"
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary">
+              更新運費設定
             </button>
           </form>
         )}

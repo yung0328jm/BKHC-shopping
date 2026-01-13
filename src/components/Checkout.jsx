@@ -5,6 +5,7 @@ import { decreaseProductStock } from '../utils/supabaseApi'
 import { createOrder } from '../utils/supabaseApi'
 import { getAnnouncement } from '../utils/announcement'
 import { getCurrentUserId, getCurrentUser } from '../utils/supabaseAuth'
+import { getFeeByDeliveryMethod } from '../utils/shippingFee'
 import './Checkout.css'
 
 function Checkout() {
@@ -14,7 +15,7 @@ function Checkout() {
     name: '',
     phone: '',
     address: '',
-    email: '',
+    deliveryMethod: '',
     paymentMethod: 'cash'
   })
   const [errors, setErrors] = useState({})
@@ -98,8 +99,8 @@ function Checkout() {
       newErrors.address = '地址為必填'
     }
     
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = '請輸入有效的電子郵件'
+    if (!formData.deliveryMethod) {
+      newErrors.deliveryMethod = '請選擇配送方式'
     }
 
     setErrors(newErrors)
@@ -138,7 +139,9 @@ function Checkout() {
       }
 
       // 创建订单记录
-      const totalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+      const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+      const shippingFee = getFeeByDeliveryMethod(formData.deliveryMethod)
+      const totalPrice = subtotal + shippingFee
       
       const order = {
         user_id: userId,
@@ -150,6 +153,8 @@ function Checkout() {
           image: item.image
         })),
         customer_info: formData,
+        subtotal: subtotal,
+        shipping_fee: shippingFee,
         total: totalPrice,
         status: 'pending',
         payment_method: formData.paymentMethod
@@ -186,7 +191,9 @@ function Checkout() {
     }
   }
 
-  const totalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+  const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+  const shippingFee = formData.deliveryMethod ? getFeeByDeliveryMethod(formData.deliveryMethod) : 0
+  const totalPrice = subtotal + shippingFee
 
   if (cartItems.length === 0) {
     return null
@@ -230,17 +237,20 @@ function Checkout() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="email">電子郵件</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
+                <label htmlFor="deliveryMethod">配送方式 <span className="required">*</span></label>
+                <select
+                  id="deliveryMethod"
+                  name="deliveryMethod"
+                  value={formData.deliveryMethod}
                   onChange={handleChange}
-                  className={errors.email ? 'input-error' : ''}
-                  placeholder="輸入您的電子郵件（選填）"
-                />
-                {errors.email && <span className="error-message">{errors.email}</span>}
+                  className={errors.deliveryMethod ? 'input-error' : ''}
+                >
+                  <option value="">請選擇配送方式</option>
+                  <option value="711賣貨便">711賣貨便</option>
+                  <option value="宅配">宅配</option>
+                  <option value="面交">面交</option>
+                </select>
+                {errors.deliveryMethod && <span className="error-message">{errors.deliveryMethod}</span>}
               </div>
 
               <div className="form-group">
@@ -267,7 +277,6 @@ function Checkout() {
                 >
                   <option value="cash">貨到付款</option>
                   <option value="transfer">銀行轉帳</option>
-                  <option value="credit">信用卡</option>
                 </select>
               </div>
 
@@ -322,6 +331,22 @@ function Checkout() {
                   </span>
                 </div>
               ))}
+            </div>
+            
+            <div className="order-summary-line">
+              <span>小計：</span>
+              <span>NT$ {subtotal.toLocaleString()}</span>
+            </div>
+            
+            <div className="order-summary-line">
+              <span>運費：</span>
+              <span>
+                {formData.deliveryMethod ? (
+                  `NT$ ${shippingFee.toLocaleString()}`
+                ) : (
+                  '請選擇配送方式'
+                )}
+              </span>
             </div>
             
             <div className="order-total">
