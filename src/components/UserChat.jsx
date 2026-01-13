@@ -173,9 +173,8 @@ function UserChat() {
       <div className="user-chat-area">
         <div className="chat-header-user">
           <div className="chat-header-info">
-            <div className="admin-avatar">👨‍💼</div>
             <div>
-              <div className="chat-header-title">客服中心</div>
+              <div className="chat-header-title">不可貨缺小幫手</div>
               <div className="chat-header-subtitle">我們會盡快回覆您的訊息</div>
             </div>
           </div>
