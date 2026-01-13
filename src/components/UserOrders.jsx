@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchOrdersByUser, updateOrderStatus } from '../utils/supabaseApi'
+import { fetchOrdersByUser } from '../utils/supabaseApi'
 import { getCurrentUserId, getCurrentUser } from '../utils/supabaseAuth'
 import './UserOrders.css'
 
@@ -89,37 +89,6 @@ function UserOrders() {
     })
   }
 
-  // 判斷訂單是否可以取消
-  const canCancelOrder = (status) => {
-    // 只有待付款和已付款（未出貨）的訂單可以取消
-    return status === 'pending' || status === 'paid'
-  }
-
-  // 處理取消訂單
-  const handleCancelOrder = async (orderId, orderStatus) => {
-    if (!canCancelOrder(orderStatus)) {
-      alert('此訂單無法取消')
-      return
-    }
-
-    const confirmMessage = orderStatus === 'pending' 
-      ? '確定要取消此訂單嗎？取消後將無法恢復。'
-      : '確定要取消此訂單嗎？已付款的訂單取消後將進行退款處理。'
-    
-    if (!window.confirm(confirmMessage)) {
-      return
-    }
-
-    try {
-      await updateOrderStatus(orderId, 'cancelled')
-      alert('訂單已取消')
-      loadOrders() // 重新載入訂單列表
-    } catch (error) {
-      console.error('取消訂單失敗:', error)
-      alert('取消訂單失敗，請稍後再試')
-    }
-  }
-
   if (orders.length === 0) {
     return (
       <div className="user-orders-container">
@@ -206,25 +175,12 @@ function UserOrders() {
                   <span className="order-id-label">訂單編號</span>
                   <span className="order-id-value">#{order.id.slice(-8)}</span>
                 </div>
-                <div className="order-header-right">
-                  <div
-                    className="order-status-badge"
-                    style={{ backgroundColor: getStatusColor(order.status || 'pending') }}
-                  >
-                    <span className="status-icon">{getStatusIcon(order.status || 'pending')}</span>
-                    <span className="status-text">{getStatusText(order.status || 'pending')}</span>
-                  </div>
-                  {canCancelOrder(order.status) && (
-                    <button
-                      className="btn-cancel-order"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleCancelOrder(order.id, order.status)
-                      }}
-                    >
-                      ❌ 取消訂單
-                    </button>
-                  )}
+                <div
+                  className="order-status-badge"
+                  style={{ backgroundColor: getStatusColor(order.status || 'pending') }}
+                >
+                  <span className="status-icon">{getStatusIcon(order.status || 'pending')}</span>
+                  <span className="status-text">{getStatusText(order.status || 'pending')}</span>
                 </div>
               </div>
 
