@@ -379,12 +379,12 @@ export const getUnreadCountForConversation = async (conversationId, adminId) => 
   return count || 0
 }
 
-// 刪除訊息（僅管理員）
-export const deleteMessage = async (messageId) => {
+// 刪除對話（僅管理員，會自動刪除相關訊息）
+export const deleteConversation = async (conversationId) => {
   const { error } = await supabase
-    .from('messages')
+    .from('conversations')
     .delete()
-    .eq('id', messageId)
+    .eq('id', conversationId)
   
   if (error) throw error
 }
