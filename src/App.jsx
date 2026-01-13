@@ -123,10 +123,33 @@ function AppContent() {
 
   return (
     <div className="app">
+      <div className="background-dogs">
+        <div className="dog dog-1">🐶</div>
+        <div className="dog dog-2">🐶</div>
+        <div className="dog dog-3">🐶</div>
+        <div className="dog dog-4">🐶</div>
+        <div className="paw-print paw-1">🐾</div>
+        <div className="paw-print paw-2">🐾</div>
+        <div className="paw-print paw-3">🐾</div>
+        <div className="paw-print paw-4">🐾</div>
+        <div className="paw-print paw-5">🐾</div>
+        <div className="paw-print paw-6">🐾</div>
+        <div className="paw-print paw-7">🐾</div>
+        <div className="paw-print paw-8">🐾</div>
+        <div className="paw-print paw-9">🐾</div>
+        <div className="paw-print paw-10">🐾</div>
+      </div>
       <nav className="navbar">
         <div className="nav-container">
           <Link to="/" className="logo-link">
-            <h1 className="logo">不可貨缺</h1>
+            <span className="logo-dog logo-dog-left">🐶</span>
+            <h1 className="logo">
+              <span className="logo-char">不</span>
+              <span className="logo-char">可</span>
+              <span className="logo-char">貨</span>
+              <span className="logo-char">缺</span>
+            </h1>
+            <span className="logo-dog logo-dog-right">🐶</span>
           </Link>
           <div className="nav-links">
             <Link to="/" className="nav-link">商品列表</Link>
