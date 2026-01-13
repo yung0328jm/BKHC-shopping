@@ -17,6 +17,7 @@ function UserChat() {
   const [isLoading, setIsLoading] = useState(true)
   const messagesEndRef = useRef(null)
   const currentUserId = useRef(null)
+  const unsubscribeRef = useRef(null)
 
   useEffect(() => {
     initializeChat()
@@ -26,6 +27,14 @@ function UserChat() {
     if (conversation) {
       loadMessages(conversation.id)
       markMessagesAsRead(conversation.id, currentUserId.current)
+    }
+    
+    // 清理訂閱
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current()
+        unsubscribeRef.current = null
+      }
     }
   }, [conversation])
 
@@ -51,34 +60,60 @@ function UserChat() {
 
   const loadMessages = async (conversationId) => {
     try {
+      // 先取消舊的訂閱
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current()
+        unsubscribeRef.current = null
+      }
+      
       const data = await getMessagesByConversation(conversationId)
       setMessages(data)
       
       // 訂閱新訊息
       const unsubscribe = subscribeMessages(conversationId, async (payload) => {
         if (payload.eventType === 'INSERT') {
-          // 獲取新訊息的發送者資訊
-          const newMessage = payload.new
-          try {
-            const { data: profile } = await supabase
+          const newMsg = payload.new
+          
+          // 檢查訊息是否已存在（避免重複）
+          setMessages(prev => {
+            const exists = prev.some(msg => msg.id === newMsg.id)
+            if (exists) return prev
+            
+            // 獲取新訊息的發送者資訊
+            supabase
               .from('profiles')
               .select('id, username, email, display_name, is_admin')
-              .eq('id', newMessage.sender_id)
+              .eq('id', newMsg.sender_id)
               .single()
+              .then(({ data: profile }) => {
+                setMessages(prevMsgs => {
+                  // 再次檢查是否已存在
+                  if (prevMsgs.some(msg => msg.id === newMsg.id)) {
+                    return prevMsgs
+                  }
+                  return [...prevMsgs, {
+                    ...newMsg,
+                    sender: profile || { id: newMsg.sender_id }
+                  }]
+                })
+                markMessagesAsRead(conversationId, currentUserId.current)
+              })
+              .catch(() => {
+                // 如果獲取發送者資訊失敗，仍然添加訊息
+                setMessages(prevMsgs => {
+                  if (prevMsgs.some(msg => msg.id === newMsg.id)) {
+                    return prevMsgs
+                  }
+                  return [...prevMsgs, newMsg]
+                })
+              })
             
-            setMessages(prev => [...prev, {
-              ...newMessage,
-              sender: profile || { id: newMessage.sender_id }
-            }])
-            markMessagesAsRead(conversationId, currentUserId.current)
-          } catch (err) {
-            // 如果獲取發送者資訊失敗，仍然添加訊息
-            setMessages(prev => [...prev, newMessage])
-          }
+            return prev
+          })
         }
       })
 
-      return unsubscribe
+      unsubscribeRef.current = unsubscribe
     } catch (error) {
       console.error('載入訊息失敗:', error)
       const errorMessage = error.message || '載入訊息失敗'
@@ -94,8 +129,7 @@ function UserChat() {
       const userId = await getCurrentUserId()
       await sendMessage(conversation.id, userId, newMessage)
       setNewMessage('')
-      // 重新載入訊息
-      loadMessages(conversation.id)
+      // 不需要重新載入訊息，Realtime 訂閱會自動更新
     } catch (error) {
       console.error('發送訊息失敗:', error)
       alert('發送訊息失敗，請稍後再試')
