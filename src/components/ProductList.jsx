@@ -10,7 +10,6 @@ import './ProductList.css'
 function ProductList({ onCartUpdate }) {
   const navigate = useNavigate()
   const [products, setProducts] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -101,10 +100,8 @@ function ProductList({ onCartUpdate }) {
 
   // 過濾商品
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
-    return matchesSearch && matchesCategory
+    return matchesCategory
   })
 
   return (
@@ -119,16 +116,6 @@ function ProductList({ onCartUpdate }) {
       </div>
 
       <div className="filter-section">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="搜尋商品名稱或描述..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-        </div>
-
         <div className="category-filter">
           <label>分類篩選：</label>
           <select
