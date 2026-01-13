@@ -7,7 +7,7 @@ import {
   sendMessage,
   markMessagesAsRead,
   subscribeMessages,
-  deleteMessage,
+  deleteConversation,
   getUnreadCountForConversation
 } from '../utils/supabaseApi'
 import './AdminChat.css'
@@ -29,6 +29,27 @@ function AdminChat() {
     getCurrentUserId().then(id => {
       currentUserId.current = id
     })
+    
+    // 訂閱對話列表變更（用於即時更新對話列表）
+    const channel = supabase
+      .channel('conversations-list')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations'
+        },
+        () => {
+          // 當對話列表變更時，重新載入列表
+          loadConversations()
+        }
+      )
+      .subscribe()
+    
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   useEffect(() => {
@@ -154,7 +175,7 @@ function AdminChat() {
             })
           }
         } else if (payload.eventType === 'DELETE') {
-          // 處理刪除事件
+          // 處理訊息刪除事件
           const deletedMsgId = payload.old.id
           setMessages(prevMsgs => prevMsgs.filter(msg => msg.id !== deletedMsgId))
           processedMessageIds.current.delete(deletedMsgId)
@@ -186,17 +207,27 @@ function AdminChat() {
     }
   }
 
-  const handleDeleteMessage = async (messageId) => {
-    if (!window.confirm('確定要刪除這則訊息嗎？')) {
+  const handleDeleteConversation = async (conversationId, e) => {
+    e.stopPropagation() // 防止觸發選擇對話
+    
+    if (!window.confirm('確定要刪除這個對話嗎？這將刪除所有相關訊息，此操作無法復原。')) {
       return
     }
 
     try {
-      await deleteMessage(messageId)
-      // 訊息會通過 Realtime 訂閱自動從列表中移除
+      await deleteConversation(conversationId)
+      
+      // 如果刪除的是當前選中的對話，清空選中狀態
+      if (selectedConversation?.id === conversationId) {
+        setSelectedConversation(null)
+        setMessages([])
+      }
+      
+      // 重新載入對話列表
+      loadConversations()
     } catch (error) {
-      console.error('刪除訊息失敗:', error)
-      alert('刪除訊息失敗，請稍後再試')
+      console.error('刪除對話失敗:', error)
+      alert('刪除對話失敗，請稍後再試')
     }
   }
 
@@ -257,9 +288,18 @@ function AdminChat() {
                           <div className="conversation-name">
                             {getUserDisplayName(conv.user)}
                           </div>
-                          {unreadCount > 0 && (
-                            <span className="unread-indicator"></span>
-                          )}
+                          <div className="conversation-actions">
+                            {unreadCount > 0 && (
+                              <span className="unread-indicator"></span>
+                            )}
+                            <button
+                              className="btn-delete-conversation"
+                              onClick={(e) => handleDeleteConversation(conv.id, e)}
+                              title="刪除對話"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </div>
                         <div className="conversation-time">
                           {conv.last_message_at 
@@ -314,27 +354,13 @@ function AdminChat() {
                       >
                         <div className="message-content">
                           <div className="message-text">{msg.content}</div>
-                          <div className="message-footer">
-                            <div className="message-time">
-                              {new Date(msg.created_at).toLocaleString('zh-TW', {
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </div>
-                            {isAdmin && (
-                              <button
-                                className="btn-delete-message"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDeleteMessage(msg.id)
-                                }}
-                                title="刪除訊息"
-                              >
-                                🗑️
-                              </button>
-                            )}
+                          <div className="message-time">
+                            {new Date(msg.created_at).toLocaleString('zh-TW', {
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
                           </div>
                         </div>
                       </div>
