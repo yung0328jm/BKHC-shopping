@@ -6,7 +6,9 @@ import {
   getMessagesByConversation, 
   sendMessage,
   markMessagesAsRead,
-  subscribeMessages
+  subscribeMessages,
+  deleteMessage,
+  getUnreadCountForConversation
 } from '../utils/supabaseApi'
 import './AdminChat.css'
 
@@ -16,6 +18,7 @@ function AdminChat() {
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [unreadCounts, setUnreadCounts] = useState({}) // 儲存每個對話的未讀數量
   const messagesEndRef = useRef(null)
   const currentUserId = useRef(null)
   const unsubscribeRef = useRef(null)
@@ -42,6 +45,15 @@ function AdminChat() {
     loadMessages(conversationId)
     markMessagesAsRead(conversationId, currentUserId.current)
     
+    // 更新未讀計數（標記為已讀後）
+    if (currentUserId.current) {
+      getUnreadCountForConversation(conversationId, currentUserId.current)
+        .then(count => {
+          setUnreadCounts(prev => ({ ...prev, [conversationId]: count }))
+        })
+        .catch(err => console.error('更新未讀計數失敗:', err))
+    }
+    
     // 清理訂閱
     return () => {
       if (unsubscribeRef.current) {
@@ -56,6 +68,17 @@ function AdminChat() {
       setIsLoading(true)
       const data = await getAllConversations()
       setConversations(data)
+      
+      // 載入每個對話的未讀訊息數量
+      if (currentUserId.current) {
+        const counts = {}
+        for (const conv of data) {
+          const count = await getUnreadCountForConversation(conv.id, currentUserId.current)
+          counts[conv.id] = count
+        }
+        setUnreadCounts(counts)
+      }
+      
       if (data.length > 0 && !selectedConversation) {
         setSelectedConversation(data[0])
       }
@@ -115,6 +138,12 @@ function AdminChat() {
               }]
             })
             markMessagesAsRead(conversationId, currentUserId.current)
+            
+            // 更新未讀計數
+            if (currentUserId.current) {
+              const count = await getUnreadCountForConversation(conversationId, currentUserId.current)
+              setUnreadCounts(prev => ({ ...prev, [conversationId]: count }))
+            }
           } catch (err) {
             // 如果獲取發送者資訊失敗，仍然添加訊息
             setMessages(prevMsgs => {
@@ -124,6 +153,11 @@ function AdminChat() {
               return [...prevMsgs, newMsg]
             })
           }
+        } else if (payload.eventType === 'DELETE') {
+          // 處理刪除事件
+          const deletedMsgId = payload.old.id
+          setMessages(prevMsgs => prevMsgs.filter(msg => msg.id !== deletedMsgId))
+          processedMessageIds.current.delete(deletedMsgId)
         }
       })
 
@@ -149,6 +183,20 @@ function AdminChat() {
     } catch (error) {
       console.error('發送訊息失敗:', error)
       alert('發送訊息失敗，請稍後再試')
+    }
+  }
+
+  const handleDeleteMessage = async (messageId) => {
+    if (!window.confirm('確定要刪除這則訊息嗎？')) {
+      return
+    }
+
+    try {
+      await deleteMessage(messageId)
+      // 訊息會通過 Realtime 訂閱自動從列表中移除
+    } catch (error) {
+      console.error('刪除訊息失敗:', error)
+      alert('刪除訊息失敗，請稍後再試')
     }
   }
 
@@ -189,34 +237,45 @@ function AdminChat() {
             </div>
           ) : (
             <div className="conversations-items">
-              {conversations.map(conv => (
-                <div
-                  key={conv.id}
-                  className={`conversation-item ${selectedConversation?.id === conv.id ? 'active' : ''}`}
-                  onClick={() => setSelectedConversation(conv)}
-                >
-                  <div className="conversation-user-info">
-                    <div className="conversation-avatar">
-                      {getUserDisplayName(conv.user)?.charAt(0) || '客'}
-                    </div>
-                    <div className="conversation-details">
-                      <div className="conversation-name">
-                        {getUserDisplayName(conv.user)}
+              {conversations.map(conv => {
+                const unreadCount = unreadCounts[conv.id] || 0
+                return (
+                  <div
+                    key={conv.id}
+                    className={`conversation-item ${selectedConversation?.id === conv.id ? 'active' : ''}`}
+                    onClick={() => setSelectedConversation(conv)}
+                  >
+                    <div className="conversation-user-info">
+                      <div className="conversation-avatar">
+                        {getUserDisplayName(conv.user)?.charAt(0) || '客'}
+                        {unreadCount > 0 && (
+                          <span className="unread-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                        )}
                       </div>
-                      <div className="conversation-time">
-                        {conv.last_message_at 
-                          ? new Date(conv.last_message_at).toLocaleString('zh-TW', {
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })
-                          : '無訊息'}
+                      <div className="conversation-details">
+                        <div className="conversation-name-row">
+                          <div className="conversation-name">
+                            {getUserDisplayName(conv.user)}
+                          </div>
+                          {unreadCount > 0 && (
+                            <span className="unread-indicator"></span>
+                          )}
+                        </div>
+                        <div className="conversation-time">
+                          {conv.last_message_at 
+                            ? new Date(conv.last_message_at).toLocaleString('zh-TW', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : '無訊息'}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -255,13 +314,27 @@ function AdminChat() {
                       >
                         <div className="message-content">
                           <div className="message-text">{msg.content}</div>
-                          <div className="message-time">
-                            {new Date(msg.created_at).toLocaleString('zh-TW', {
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                          <div className="message-footer">
+                            <div className="message-time">
+                              {new Date(msg.created_at).toLocaleString('zh-TW', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                            {isAdmin && (
+                              <button
+                                className="btn-delete-message"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteMessage(msg.id)
+                                }}
+                                title="刪除訊息"
+                              >
+                                🗑️
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

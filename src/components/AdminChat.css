@@ -84,6 +84,23 @@
   font-weight: 600;
   font-size: 1.1rem;
   flex-shrink: 0;
+  position: relative;
+}
+
+.unread-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff4444;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .conversation-details {
@@ -91,13 +108,39 @@
   min-width: 0;
 }
 
+.conversation-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
 .conversation-name {
   font-weight: 600;
   color: #333;
-  margin-bottom: 0.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+}
+
+.unread-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff4444;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .conversation-time {
@@ -213,9 +256,42 @@
   line-height: 1.5;
 }
 
+.message-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
 .message-time {
   font-size: 0.7rem;
   opacity: 0.7;
+}
+
+.btn-delete-message {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete-message:hover {
+  opacity: 1;
+}
+
+.message-sent .btn-delete-message {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message-received .btn-delete-message {
+  color: #666;
 }
 
 .message-input-form {
