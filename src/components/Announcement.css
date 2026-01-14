@@ -118,6 +118,116 @@
       rgba(141, 110, 99, 0.05) 4px
     );
   pointer-events: none;
+  z-index: 0;
+}
+
+.cork-board-title {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3e2723;
+  margin: 2rem 2rem 2rem 2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 240, 0.95);
+  border-radius: 8px;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(139, 69, 19, 0.3);
+  transform: rotate(-1deg);
+}
+
+.cork-board-items {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 2rem 2rem 2rem;
+}
+
+.cork-board-note {
+  position: relative;
+  background: #fffef0;
+  padding: 1.2rem 1rem 1rem 1rem;
+  border-radius: 4px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  transform: rotate(calc(-2deg + var(--rotation, 0deg)));
+  transition: transform 0.2s;
+}
+
+.cork-board-note:nth-child(odd) {
+  --rotation: 2deg;
+  transform: rotate(2deg);
+}
+
+.cork-board-note:nth-child(even) {
+  --rotation: -1.5deg;
+  transform: rotate(-1.5deg);
+}
+
+.cork-board-note:nth-child(3n) {
+  --rotation: 1deg;
+  transform: rotate(1deg);
+}
+
+.cork-board-note:hover {
+  transform: rotate(0deg) scale(1.02);
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.note-pin {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle, #c62828 0%, #8b0000 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  z-index: 2;
+}
+
+.note-pin::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.note-title {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #3e2723;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(139, 69, 19, 0.2);
+  text-align: center;
+}
+
+.note-content {
+  color: #5d4037;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  white-space: pre-line;
+  min-height: 60px;
 }
 
 
