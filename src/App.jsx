@@ -160,7 +160,7 @@ function AppContent() {
             )}
           </Link>
           <div className="nav-links">
-            <Link to="/" className="nav-link">商品列表</Link>
+            <Link to="/" className="nav-link">現貨商品</Link>
             <Link to="/preorder" className="nav-link">預購商品</Link>
             <Link to="/cart" className="nav-link cart-link">
               購物車
