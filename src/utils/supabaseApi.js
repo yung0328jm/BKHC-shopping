@@ -389,6 +389,21 @@ export const getMessagesByConversation = async (conversationId) => {
 }
 
 export const sendMessage = async (conversationId, senderId, content) => {
+  if (!conversationId || !senderId || !content || !content.trim()) {
+    throw new Error('缺少必要參數：對話 ID、發送者 ID 或訊息內容')
+  }
+  
+  // 先驗證對話是否存在
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .select('id, user_id')
+    .eq('id', conversationId)
+    .single()
+  
+  if (convError || !conversation) {
+    throw new Error('對話不存在或無法訪問')
+  }
+  
   const { data, error } = await supabase
     .from('messages')
     .insert({
@@ -398,7 +413,19 @@ export const sendMessage = async (conversationId, senderId, content) => {
     })
     .select()
     .single()
-  if (error) throw error
+  
+  if (error) {
+    console.error('發送訊息資料庫錯誤:', error)
+    // 提供更詳細的錯誤信息
+    if (error.code === '42501') {
+      throw new Error('權限不足：無法在此對話中發送訊息')
+    } else if (error.code === '23503') {
+      throw new Error('對話不存在')
+    } else {
+      throw new Error(error.message || '發送訊息失敗')
+    }
+  }
+  
   return data
 }
 
