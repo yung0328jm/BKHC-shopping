@@ -107,7 +107,7 @@ function ProductList({ onCartUpdate }) {
   return (
     <div className="product-list-container">
       <div className="list-header">
-        <h2 className="page-title">商品列表</h2>
+        <h2 className="page-title">現貨商品</h2>
         {isAdmin && (
           <Link to="/add" className="btn btn-primary">
             ➕ 上架新商品

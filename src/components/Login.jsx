@@ -90,7 +90,7 @@ function Login({ onLogin }) {
             onClick={() => navigate('/')}
             className="btn-link"
           >
-            返回商品列表
+            返回現貨商品
           </button>
         </div>
       </div>
