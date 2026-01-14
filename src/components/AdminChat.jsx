@@ -196,6 +196,17 @@ function AdminChat() {
 
     try {
       const userId = await getCurrentUserId()
+      if (!userId) {
+        alert('請先登入')
+        return
+      }
+      
+      // 確保對話存在
+      if (!selectedConversation.id) {
+        alert('對話不存在，請重新載入頁面')
+        return
+      }
+      
       await sendMessage(selectedConversation.id, userId, newMessage)
       setNewMessage('')
       // 只更新對話列表以更新最後訊息時間，不需要重新載入訊息
@@ -203,7 +214,19 @@ function AdminChat() {
       loadConversations()
     } catch (error) {
       console.error('發送訊息失敗:', error)
-      alert('發送訊息失敗，請稍後再試')
+      console.error('錯誤詳情:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      })
+      
+      // 提供更詳細的錯誤訊息
+      let errorMessage = '發送訊息失敗，請稍後再試'
+      if (error.message) {
+        errorMessage = `發送訊息失敗：${error.message}`
+      }
+      alert(errorMessage)
     }
   }
 
