@@ -1,109 +1,19 @@
-import { useState, useEffect } from 'react'
-import { getAnnouncement } from '../utils/announcement'
 import './Announcement.css'
 
 function Announcement() {
-  const [announcement, setAnnouncement] = useState(null)
-
-  useEffect(() => {
-    const loadAnnouncement = () => {
-      const data = getAnnouncement()
-      setAnnouncement(data)
-    }
-    loadAnnouncement()
-  }, [])
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '尚未更新'
-    const date = new Date(dateString)
-    return date.toLocaleString('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  if (!announcement) {
-    return (
-      <div className="announcement-container">
-        <div className="announcement-card">
-          <h2 className="page-title">公佈欄</h2>
-          <div className="loading">載入中...</div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="announcement-container">
-      <div className="announcement-card">
-        <h2 className="page-title">{announcement.title || '公佈欄'}</h2>
-        
-        <div className="announcement-update-time">
-          <span>最後更新時間：</span>
-          <strong>{formatDate(announcement.updatedAt)}</strong>
+      <div className="cork-board">
+        <div className="cork-board-frame">
+          <div className="cork-board-hanging-loops">
+            <div className="hanging-loop"></div>
+            <div className="hanging-loop"></div>
+          </div>
+          <div className="cork-board-surface">
+            {/* 空白軟木塞板，所有內容已移除 */}
+          </div>
         </div>
-
-        {announcement.gridItems && announcement.gridItems.length > 0 && (
-          <div className="announcement-grid">
-            {announcement.gridItems.map((item, index) => (
-              <div key={index} className="announcement-grid-item">
-                <div className="announcement-grid-item-title">{item.title || '未命名項目'}</div>
-                <div className="announcement-grid-item-content">
-                  {item.content ? (
-                    item.content.split('\n').map((line, idx) => (
-                      <div key={idx}>{line || '\u00A0'}</div>
-                    ))
-                  ) : (
-                    <div style={{ color: '#999' }}>（無內容）</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {(announcement.paymentInfo || announcement.shippingInfo) && (
-          <div className="announcement-grid">
-            {announcement.paymentInfo && (
-              <div className="announcement-grid-item">
-                <div className="announcement-grid-item-title">
-                  <span className="announcement-icon">💳</span>
-                  <span>匯款資訊</span>
-                </div>
-                <div className="announcement-grid-item-content">
-                  {announcement.paymentInfo.split('\n').map((line, index) => (
-                    <div key={index}>{line || '\u00A0'}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {announcement.shippingInfo && (
-              <div className="announcement-grid-item">
-                <div className="announcement-grid-item-title">
-                  <span className="announcement-icon">🚚</span>
-                  <span>發貨資訊</span>
-                </div>
-                <div className="announcement-grid-item-content">
-                  {announcement.shippingInfo.split('\n').map((line, index) => (
-                    <div key={index}>{line || '\u00A0'}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {(!announcement.gridItems || announcement.gridItems.length === 0) && 
-         !announcement.paymentInfo && 
-         !announcement.shippingInfo && (
-          <div className="announcement-empty">
-            <div className="empty-icon">📋</div>
-            <p>目前尚無公告內容</p>
-          </div>
-        )}
       </div>
     </div>
   )
