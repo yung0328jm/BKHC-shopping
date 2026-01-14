@@ -13,7 +13,8 @@ function AddProduct() {
     category: '',
     image: '',
     badge_label: '',
-    show_badge: false
+    show_badge: false,
+    is_preorder: false
   })
   const [imagePreview, setImagePreview] = useState(null)
   const [errors, setErrors] = useState({})
@@ -124,7 +125,8 @@ function AddProduct() {
         category: formData.category.trim(),
         image: formData.image || 'https://via.placeholder.com/400x300?text=No+Image',
         badge_label: formData.badge_label.trim(),
-        show_badge: formData.show_badge
+        show_badge: formData.show_badge,
+        is_preorder: formData.is_preorder
       }
 
       await insertProduct(product)
@@ -138,7 +140,8 @@ function AddProduct() {
         category: '',
         image: '',
         badge_label: '',
-        show_badge: false
+        show_badge: false,
+        is_preorder: false
       })
       setImagePreview(null)
 
@@ -264,6 +267,24 @@ function AddProduct() {
               <small className="form-hint">最多 20 個字元</small>
             </div>
           )}
+
+          <div className="form-group">
+            <label>
+              <input
+                type="checkbox"
+                name="is_preorder"
+                checked={formData.is_preorder}
+                onChange={(e) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    is_preorder: e.target.checked
+                  }))
+                }}
+                style={{ marginRight: '0.5rem' }}
+              />
+              預購商品
+            </label>
+          </div>
 
           <div className="form-group">
             <label htmlFor="imageFile">商品圖片</label>
