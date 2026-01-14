@@ -190,7 +190,7 @@ function AppContent() {
               <div className="nav-links-right">
                 <Link to="/add" className="nav-link">上架商品</Link>
                 <Link to="/admin/orders" className="nav-link">訂單管理</Link>
-                <Link to="/admin/chat" className="nav-link">💬 客戶聊天</Link>
+                <Link to="/admin/chat" className="nav-link">客戶聊天</Link>
                 <Link to="/admin/announcement" className="nav-link">公告編輯</Link>
                 <Link to="/admin/settings" className="nav-link">管理設定</Link>
                 <Link to="/" className="nav-link" onClick={handleUserLogout}>
