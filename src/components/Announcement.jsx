@@ -39,12 +39,31 @@ function Announcement() {
   return (
     <div className="announcement-container">
       <div className="announcement-card">
-        <h2 className="page-title">公佈欄</h2>
+        <h2 className="page-title">{announcement.title || '公佈欄'}</h2>
         
         <div className="announcement-update-time">
           <span>最後更新時間：</span>
           <strong>{formatDate(announcement.updatedAt)}</strong>
         </div>
+
+        {announcement.gridItems && announcement.gridItems.length > 0 && (
+          <div className="announcement-grid">
+            {announcement.gridItems.map((item, index) => (
+              <div key={index} className="announcement-grid-item">
+                <div className="announcement-grid-item-title">{item.title || '未命名項目'}</div>
+                <div className="announcement-grid-item-content">
+                  {item.content ? (
+                    item.content.split('\n').map((line, idx) => (
+                      <div key={idx}>{line || '\u00A0'}</div>
+                    ))
+                  ) : (
+                    <div style={{ color: '#999' }}>（無內容）</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {announcement.paymentInfo && (
           <div className="announcement-section">
@@ -74,7 +93,9 @@ function Announcement() {
           </div>
         )}
 
-        {!announcement.paymentInfo && !announcement.shippingInfo && (
+        {(!announcement.gridItems || announcement.gridItems.length === 0) && 
+         !announcement.paymentInfo && 
+         !announcement.shippingInfo && (
           <div className="announcement-empty">
             <div className="empty-icon">📋</div>
             <p>目前尚無公告內容</p>

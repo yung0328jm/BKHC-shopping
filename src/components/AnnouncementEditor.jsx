@@ -4,8 +4,10 @@ import './AnnouncementEditor.css'
 
 function AnnouncementEditor() {
   const [announcement, setAnnouncement] = useState({
+    title: '',
     paymentInfo: '',
-    shippingInfo: ''
+    shippingInfo: '',
+    gridItems: []
   })
   const [message, setMessage] = useState({ type: '', text: '' })
   const [isSaving, setIsSaving] = useState(false)
@@ -17,8 +19,10 @@ function AnnouncementEditor() {
   const loadAnnouncement = () => {
     const data = getAnnouncement()
     setAnnouncement({
+      title: data.title || '重要公告',
       paymentInfo: data.paymentInfo || '',
-      shippingInfo: data.shippingInfo || ''
+      shippingInfo: data.shippingInfo || '',
+      gridItems: data.gridItems || []
     })
   }
 
@@ -35,7 +39,12 @@ function AnnouncementEditor() {
     setIsSaving(true)
     
     try {
-      updateAnnouncement(announcement.paymentInfo, announcement.shippingInfo)
+      updateAnnouncement(
+        announcement.title,
+        announcement.paymentInfo,
+        announcement.shippingInfo,
+        announcement.gridItems
+      )
       setMessage({ type: 'success', text: '公告已成功更新！' })
       
       setTimeout(() => {
@@ -46,6 +55,33 @@ function AnnouncementEditor() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleGridItemChange = (index, field, value) => {
+    const newGridItems = [...announcement.gridItems]
+    if (!newGridItems[index]) {
+      newGridItems[index] = { title: '', content: '' }
+    }
+    newGridItems[index][field] = value
+    setAnnouncement(prev => ({
+      ...prev,
+      gridItems: newGridItems
+    }))
+  }
+
+  const addGridItem = () => {
+    setAnnouncement(prev => ({
+      ...prev,
+      gridItems: [...prev.gridItems, { title: '', content: '' }]
+    }))
+  }
+
+  const removeGridItem = (index) => {
+    const newGridItems = announcement.gridItems.filter((_, i) => i !== index)
+    setAnnouncement(prev => ({
+      ...prev,
+      gridItems: newGridItems
+    }))
   }
 
   const formatDate = (dateString) => {
@@ -73,6 +109,83 @@ function AnnouncementEditor() {
             {message.text}
           </div>
         )}
+
+        <div className="editor-section">
+          <div className="section-header">
+            <h3>公佈欄標題</h3>
+            <span className="section-hint">此標題將顯示在公佈欄頁面頂部</span>
+          </div>
+          <input
+            type="text"
+            name="title"
+            value={announcement.title}
+            onChange={handleChange}
+            className="editor-input"
+            placeholder="例如：重要公告、最新消息等"
+            maxLength={50}
+          />
+        </div>
+
+        <div className="editor-section">
+          <div className="section-header">
+            <h3>網格內容</h3>
+            <span className="section-hint">可新增多個公告項目，以網格形式顯示</span>
+            <button
+              type="button"
+              onClick={addGridItem}
+              className="btn btn-secondary btn-sm"
+              style={{ marginLeft: 'auto' }}
+            >
+              ➕ 新增項目
+            </button>
+          </div>
+          {announcement.gridItems.length === 0 ? (
+            <div className="empty-grid-items">
+              <p>目前沒有網格項目，點擊「新增項目」開始添加</p>
+            </div>
+          ) : (
+            <div className="grid-items-editor">
+              {announcement.gridItems.map((item, index) => (
+                <div key={index} className="grid-item-editor">
+                  <div className="grid-item-header">
+                    <span className="grid-item-number">項目 {index + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeGridItem(index)}
+                      className="btn-remove-item"
+                      title="刪除此項目"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                  <div className="grid-item-fields">
+                    <div className="grid-item-field">
+                      <label>標題</label>
+                      <input
+                        type="text"
+                        value={item.title || ''}
+                        onChange={(e) => handleGridItemChange(index, 'title', e.target.value)}
+                        className="editor-input"
+                        placeholder="輸入項目標題"
+                        maxLength={100}
+                      />
+                    </div>
+                    <div className="grid-item-field">
+                      <label>內容</label>
+                      <textarea
+                        value={item.content || ''}
+                        onChange={(e) => handleGridItemChange(index, 'content', e.target.value)}
+                        className="editor-textarea"
+                        rows="4"
+                        placeholder="輸入項目內容"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="editor-section">
           <div className="section-header">
@@ -124,7 +237,27 @@ function AnnouncementEditor() {
         <div className="preview-section">
           <h3>預覽效果</h3>
           <div className="preview-card">
-            <div className="preview-title">📢 重要公告</div>
+            <div className="preview-title">📢 {announcement.title || '重要公告'}</div>
+            
+            {announcement.gridItems.length > 0 && (
+              <div className="preview-grid">
+                {announcement.gridItems.map((item, index) => (
+                  <div key={index} className="preview-grid-item">
+                    <div className="preview-grid-title">{item.title || '未命名項目'}</div>
+                    <div className="preview-grid-content">
+                      {item.content ? (
+                        item.content.split('\n').map((line, idx) => (
+                          <div key={idx}>{line || '\u00A0'}</div>
+                        ))
+                      ) : (
+                        <div style={{ color: '#999' }}>（無內容）</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {announcement.paymentInfo && (
               <div className="preview-item">
                 <div className="preview-label">💳 匯款資訊</div>
@@ -145,7 +278,7 @@ function AnnouncementEditor() {
                 </div>
               </div>
             )}
-            {!announcement.paymentInfo && !announcement.shippingInfo && (
+            {announcement.gridItems.length === 0 && !announcement.paymentInfo && !announcement.shippingInfo && (
               <div className="preview-empty">尚未設定公告內容</div>
             )}
           </div>
