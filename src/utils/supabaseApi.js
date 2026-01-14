@@ -5,9 +5,30 @@ export const fetchProducts = async () => {
   const { data, error } = await supabase
     .from('products')
     .select('*')
+    .eq('is_preorder', false)
     .order('created_at', { ascending: false })
   if (error) throw error
   return data || []
+}
+
+export const fetchPreOrderProducts = async () => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_preorder', true)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export const fetchProductById = async (id) => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (error) throw error
+  return data
 }
 
 export const insertProduct = async (product) => {
