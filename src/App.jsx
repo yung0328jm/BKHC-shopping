@@ -171,11 +171,13 @@ function AppContent() {
               {isUser ? (
                 <>
                   <Link to="/orders" className="nav-link">我的訂單</Link>
-                  <Link to="/chat" className="nav-link">聯絡客服</Link>
+                  {!isAdmin && <Link to="/chat" className="nav-link">聯絡客服</Link>}
                   <Link to="/announcement" className="nav-link">公佈欄</Link>
-                  <Link to="/" className="nav-link" onClick={handleUserLogout}>
-                    登出
-                  </Link>
+                  {!isAdmin && (
+                    <Link to="/" className="nav-link" onClick={handleUserLogout}>
+                      登出
+                    </Link>
+                  )}
                 </>
               ) : (
                 <>
@@ -191,6 +193,9 @@ function AppContent() {
                 <Link to="/admin/chat" className="nav-link">💬 客戶聊天</Link>
                 <Link to="/admin/announcement" className="nav-link">公告編輯</Link>
                 <Link to="/admin/settings" className="nav-link">管理設定</Link>
+                <Link to="/" className="nav-link" onClick={handleUserLogout}>
+                  登出
+                </Link>
               </div>
             )}
           </div>
