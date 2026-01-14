@@ -16,14 +16,19 @@ function AnnouncementEditor() {
     loadAnnouncement()
   }, [])
 
-  const loadAnnouncement = () => {
-    const data = getAnnouncement()
-    setAnnouncement({
-      title: data.title || '重要公告',
-      paymentInfo: data.paymentInfo || '',
-      shippingInfo: data.shippingInfo || '',
-      gridItems: data.gridItems || []
-    })
+  const loadAnnouncement = async () => {
+    try {
+      const data = await getAnnouncement()
+      setAnnouncement({
+        title: data.title || '重要公告',
+        paymentInfo: data.paymentInfo || '',
+        shippingInfo: data.shippingInfo || '',
+        gridItems: data.gridItems || []
+      })
+    } catch (error) {
+      console.error('載入公告失敗:', error)
+      setMessage({ type: 'error', text: '載入公告失敗，請稍後再試' })
+    }
   }
 
   const handleChange = (e) => {
@@ -35,23 +40,24 @@ function AnnouncementEditor() {
     setMessage({ type: '', text: '' })
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true)
     
     try {
-      updateAnnouncement(
+      await updateAnnouncement(
         announcement.title,
         announcement.paymentInfo,
         announcement.shippingInfo,
         announcement.gridItems
       )
-      setMessage({ type: 'success', text: '公告已成功更新！' })
+      setMessage({ type: 'success', text: '公告已成功更新！所有設備將同步更新。' })
       
       setTimeout(() => {
         setMessage({ type: '', text: '' })
       }, 3000)
     } catch (error) {
-      setMessage({ type: 'error', text: '更新失敗，請稍後再試' })
+      console.error('更新公告失敗:', error)
+      setMessage({ type: 'error', text: `更新失敗：${error.message || '請稍後再試'}` })
     } finally {
       setIsSaving(false)
     }
@@ -96,7 +102,19 @@ function AnnouncementEditor() {
     })
   }
 
-  const currentAnnouncement = getAnnouncement()
+  const [currentAnnouncement, setCurrentAnnouncement] = useState(null)
+
+  useEffect(() => {
+    const loadCurrent = async () => {
+      try {
+        const data = await getAnnouncement()
+        setCurrentAnnouncement(data)
+      } catch (error) {
+        console.error('載入當前公告失敗:', error)
+      }
+    }
+    loadCurrent()
+  }, [])
 
   return (
     <div className="announcement-editor-container">
@@ -220,7 +238,7 @@ function AnnouncementEditor() {
         <div className="editor-info">
           <div className="info-item">
             <span>最後更新時間：</span>
-            <strong>{formatDate(currentAnnouncement.updatedAt)}</strong>
+            <strong>{currentAnnouncement ? formatDate(currentAnnouncement.updatedAt) : '載入中...'}</strong>
           </div>
         </div>
 

@@ -23,8 +23,15 @@ function Checkout() {
   const [announcement, setAnnouncement] = useState(null)
 
   useEffect(() => {
-    const announcementData = getAnnouncement()
-    setAnnouncement(announcementData)
+    const loadAnnouncement = async () => {
+      try {
+        const announcementData = await getAnnouncement()
+        setAnnouncement(announcementData)
+      } catch (error) {
+        console.error('載入公告失敗:', error)
+      }
+    }
+    loadAnnouncement()
   }, [])
 
   useEffect(() => {

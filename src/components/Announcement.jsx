@@ -1,17 +1,66 @@
 import { useState, useEffect } from 'react'
 import { getAnnouncement } from '../utils/announcement'
+import { supabase } from '../utils/supabaseClient'
 import './Announcement.css'
 
 function Announcement() {
   const [announcement, setAnnouncement] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadAnnouncement = () => {
-      const data = getAnnouncement()
-      setAnnouncement(data)
-    }
     loadAnnouncement()
+    
+    // 訂閱公告更新（實現即時同步）
+    const channel = supabase
+      .channel('announcements-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'announcements'
+        },
+        (payload) => {
+          console.log('公告已更新:', payload)
+          loadAnnouncement()
+        }
+      )
+      .subscribe()
+    
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
+
+  const loadAnnouncement = async () => {
+    try {
+      setIsLoading(true)
+      const data = await getAnnouncement()
+      setAnnouncement(data)
+    } catch (error) {
+      console.error('載入公告失敗:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="announcement-container">
+        <div className="cork-board">
+          <div className="cork-board-frame">
+            <div className="cork-board-hanging-loops">
+              <div className="hanging-loop"></div>
+              <div className="hanging-loop"></div>
+            </div>
+            <div className="cork-board-surface">
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>載入中...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="announcement-container">
