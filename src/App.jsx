@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
 import ProductList from './components/ProductList'
+import PreOrderProductList from './components/PreOrderProductList'
 import ProductDetail from './components/ProductDetail'
 import AddProduct from './components/AddProduct'
 import EditProduct from './components/EditProduct'
@@ -160,6 +161,7 @@ function AppContent() {
           </Link>
           <div className="nav-links">
             <Link to="/" className="nav-link">商品列表</Link>
+            <Link to="/preorder" className="nav-link">預購商品</Link>
             <Link to="/cart" className="nav-link cart-link">
               購物車
               {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
@@ -199,6 +201,14 @@ function AppContent() {
               element={
                 <UserProtectedRoute>
                   <ProductList onCartUpdate={updateCartCount} />
+                </UserProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/preorder" 
+              element={
+                <UserProtectedRoute>
+                  <PreOrderProductList onCartUpdate={updateCartCount} />
                 </UserProtectedRoute>
               } 
             />
