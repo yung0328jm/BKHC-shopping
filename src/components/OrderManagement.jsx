@@ -61,14 +61,16 @@ function OrderManagement() {
     }
   }
 
-  const filteredOrders = filterStatus === 'all' 
-    ? orders 
-    : orders.filter(order => order.status === filterStatus)
-
   // 檢查訂單是否包含預購商品
   const hasPreOrderItems = (order) => {
     return order.items && order.items.some(item => item.is_preorder === true)
   }
+
+  const filteredOrders = filterStatus === 'all' 
+    ? orders 
+    : filterStatus === 'preorder'
+    ? orders.filter(order => hasPreOrderItems(order))
+    : orders.filter(order => order.status === filterStatus)
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -124,6 +126,10 @@ function OrderManagement() {
           <div className="stat-number">{orders.filter(o => o.status === 'shipped').length}</div>
           <div className="stat-label">已出貨</div>
         </div>
+        <div className="stat-card">
+          <div className="stat-number" style={{ color: '#e67e22' }}>{orders.filter(o => hasPreOrderItems(o)).length}</div>
+          <div className="stat-label">預購單</div>
+        </div>
       </div>
 
       <div className="order-filters">
@@ -156,6 +162,12 @@ function OrderManagement() {
           onClick={() => setFilterStatus('completed')}
         >
           已完成
+        </button>
+        <button
+          className={`filter-btn ${filterStatus === 'preorder' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('preorder')}
+        >
+          📦 預購單
         </button>
       </div>
 
