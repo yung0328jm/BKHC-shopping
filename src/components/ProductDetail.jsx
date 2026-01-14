@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { fetchProducts } from '../utils/supabaseApi'
+import { fetchProductById } from '../utils/supabaseApi'
 import { upsertCartItem } from '../utils/supabaseApi'
 import { getCurrentUserId, getCurrentUser, getUserProfile } from '../utils/supabaseAuth'
 import './ProductDetail.css'
@@ -16,8 +16,7 @@ function ProductDetail({ onCartUpdate }) {
   useEffect(() => {
     const loadProduct = async () => {
       try {
-        const products = await fetchProducts()
-        const foundProduct = products.find(p => p.id === id)
+        const foundProduct = await fetchProductById(id)
         if (foundProduct) {
           setProduct(foundProduct)
         } else {
@@ -50,14 +49,21 @@ function ProductDetail({ onCartUpdate }) {
   }, [id, navigate])
 
   const handleAddToCart = async () => {
-    if (!product || product.stock === 0) {
-      alert('此商品目前缺貨')
+    // 預購商品跳過庫存檢查
+    if (!product) {
       return
     }
 
-    if (quantity > product.stock) {
-      alert(`庫存不足，目前僅剩 ${product.stock} 件`)
-      return
+    if (!product.is_preorder) {
+      if (product.stock === 0) {
+        alert('此商品目前缺貨')
+        return
+      }
+
+      if (quantity > product.stock) {
+        alert(`庫存不足，目前僅剩 ${product.stock} 件`)
+        return
+      }
     }
 
     try {
@@ -82,7 +88,8 @@ function ProductDetail({ onCartUpdate }) {
 
   const handleQuantityChange = (delta) => {
     const newQuantity = quantity + delta
-    if (newQuantity >= 1 && newQuantity <= product.stock) {
+    // 預購商品不限制數量上限
+    if (newQuantity >= 1 && (product.is_preorder || newQuantity <= product.stock)) {
       setQuantity(newQuantity)
     }
   }
@@ -118,9 +125,21 @@ function ProductDetail({ onCartUpdate }) {
 
         <div className="product-detail-info">
           <div className="product-detail-category">{product.category}</div>
-          <h1 className="product-detail-name">{product.name}</h1>
+          <h1 className="product-detail-name">
+            {product.name}
+            {product.is_preorder && (
+              <span style={{ 
+                marginLeft: '0.5rem', 
+                fontSize: '1rem', 
+                color: '#e67e22',
+                fontWeight: 'bold'
+              }}>📦 預購</span>
+            )}
+          </h1>
           <div className="product-detail-price">NT$ {product.price.toLocaleString()}</div>
-          <div className="product-detail-stock">庫存：{product.stock} 件</div>
+          <div className="product-detail-stock">
+            {product.is_preorder ? '預購中' : `庫存：${product.stock} 件`}
+          </div>
           
           {product.description && (
             <div className="product-detail-description">
@@ -134,7 +153,11 @@ function ProductDetail({ onCartUpdate }) {
               <label>數量：</label>
               <div className="quantity-control">
                 <button
-                  onClick={() => handleQuantityChange(-1)}
+                  onClick={() => {
+                    if (quantity > 1) {
+                      handleQuantityChange(-1)
+                    }
+                  }}
                   className="quantity-btn"
                   disabled={quantity <= 1}
                 >
@@ -146,17 +169,17 @@ function ProductDetail({ onCartUpdate }) {
                   value={quantity}
                   onChange={(e) => {
                     const val = parseInt(e.target.value, 10)
-                    if (!isNaN(val) && val >= 1 && val <= product.stock) {
+                    if (!isNaN(val) && val >= 1 && (product.is_preorder || val <= product.stock)) {
                       setQuantity(val)
                     }
                   }}
                   min="1"
-                  max={product.stock}
+                  max={product.is_preorder ? undefined : product.stock}
                 />
                 <button
                   onClick={() => handleQuantityChange(1)}
                   className="quantity-btn"
-                  disabled={quantity >= product.stock}
+                  disabled={!product.is_preorder && quantity >= product.stock}
                 >
                   +
                 </button>
@@ -166,9 +189,9 @@ function ProductDetail({ onCartUpdate }) {
             <button
               onClick={handleAddToCart}
               className="btn btn-primary btn-large"
-              disabled={product.stock === 0}
+              disabled={!product.is_preorder && product.stock === 0}
             >
-              {product.stock === 0 ? '缺貨' : '加入購物車'}
+              {(!product.is_preorder && product.stock === 0) ? '缺貨' : '加入購物車'}
             </button>
 
             {isAdmin && (

@@ -115,9 +115,9 @@ function Checkout() {
       return
     }
 
-    // 再次检查库存
+    // 再次检查库存（預購商品跳過庫存檢查）
     for (const item of cartItems) {
-      if (item.quantity > item.product.stock) {
+      if (!item.is_preorder && item.quantity > item.product.stock) {
         alert(`商品「${item.name}」庫存不足，目前僅剩 ${item.product.stock} 件`)
         navigate('/cart')
         return
