@@ -43,11 +43,7 @@ function UserLogin({ onLogin }) {
           onLogin()
         }
         alert('登入成功！')
-        if (window.location.reload) {
-          window.location.reload()
-        } else {
-          navigate('/')
-        }
+        navigate('/announcement')
       } else {
         setError(result.message)
       }

@@ -17,9 +17,8 @@ function OAuthCallback() {
         if (data?.session) {
           // 處理用戶資料
           await handleOAuthCallback()
-          // 登入成功，跳轉到首頁
-          navigate('/')
-          window.location.reload()
+          // 登入成功，跳轉到公佈欄
+          navigate('/announcement')
         } else {
           alert('登入失敗：無法取得 session')
           navigate('/user/login')
