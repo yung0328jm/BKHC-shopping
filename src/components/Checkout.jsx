@@ -53,6 +53,7 @@ function Checkout() {
             price: parseFloat(product.price),
             image: product.image,
             quantity: item.quantity,
+            is_preorder: product.is_preorder || false,
             product: product
           }
         })
@@ -133,9 +134,11 @@ function Checkout() {
         return
       }
 
-      // 更新库存（使用資料庫函數，可以繞過 RLS 政策）
+      // 更新库存（預購商品跳過庫存更新）
       for (const item of cartItems) {
-        await decreaseProductStock(item.id, item.quantity)
+        if (!item.is_preorder) {
+          await decreaseProductStock(item.id, item.quantity)
+        }
       }
 
       // 创建订单记录
@@ -150,7 +153,8 @@ function Checkout() {
           name: item.name,
           price: item.price,
           quantity: item.quantity,
-          image: item.image
+          image: item.image,
+          is_preorder: item.is_preorder || false
         })),
         customer_info: formData,
         subtotal: subtotal,

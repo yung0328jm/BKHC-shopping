@@ -45,6 +45,11 @@ function UserOrders() {
     ? orders 
     : orders.filter(order => order.status === filterStatus)
 
+  // 檢查訂單是否包含預購商品
+  const hasPreOrderItems = (order) => {
+    return order.items && order.items.some(item => item.is_preorder === true)
+  }
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return '#f39c12'
@@ -175,12 +180,22 @@ function UserOrders() {
                   <span className="order-id-label">訂單編號</span>
                   <span className="order-id-value">#{order.id.slice(-8)}</span>
                 </div>
-                <div
-                  className="order-status-badge"
-                  style={{ backgroundColor: getStatusColor(order.status || 'pending') }}
-                >
-                  <span className="status-icon">{getStatusIcon(order.status || 'pending')}</span>
-                  <span className="status-text">{getStatusText(order.status || 'pending')}</span>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <div
+                    className="order-status-badge"
+                    style={{ backgroundColor: getStatusColor(order.status || 'pending') }}
+                  >
+                    <span className="status-icon">{getStatusIcon(order.status || 'pending')}</span>
+                    <span className="status-text">{getStatusText(order.status || 'pending')}</span>
+                  </div>
+                  {hasPreOrderItems(order) && (
+                    <div
+                      className="order-status-badge"
+                      style={{ backgroundColor: '#e67e22', fontSize: '0.85rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      <span>📦 預購</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -233,7 +248,17 @@ function UserOrders() {
                             }}
                           />
                           <div className="item-info-full">
-                            <div className="item-name-full">{item.name}</div>
+                            <div className="item-name-full">
+                              {item.name}
+                              {item.is_preorder && (
+                                <span style={{ 
+                                  marginLeft: '0.5rem', 
+                                  fontSize: '0.75rem', 
+                                  color: '#e67e22',
+                                  fontWeight: 'bold'
+                                }}>📦 預購</span>
+                              )}
+                            </div>
                             <div className="item-details-full">
                               <span>數量：{item.quantity}</span>
                               <span>單價：NT$ {item.price.toLocaleString()}</span>

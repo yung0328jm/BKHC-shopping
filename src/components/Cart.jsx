@@ -43,6 +43,7 @@ function Cart({ onCartUpdate }) {
           price: parseFloat(product.price),
           image: product.image,
           quantity: item.quantity,
+          is_preorder: product.is_preorder || false,
           product: product
         }
       })
@@ -87,8 +88,8 @@ function Cart({ onCartUpdate }) {
         return
       }
 
-      // 檢查庫存
-      if (item && quantity > item.product.stock) {
+      // 檢查庫存（預購商品跳過庫存檢查）
+      if (item && !item.product.is_preorder && quantity > item.product.stock) {
         alert(`庫存不足，目前僅剩 ${item.product.stock} 件`)
         setEditingQuantity(prev => ({ ...prev, [productId]: item.quantity }))
         return
@@ -209,9 +210,21 @@ function Cart({ onCartUpdate }) {
             </div>
             
             <div className="cart-item-info">
-              <h3 className="cart-item-name">{item.name}</h3>
+              <h3 className="cart-item-name">
+                {item.name}
+                {item.is_preorder && (
+                  <span style={{ 
+                    marginLeft: '0.5rem', 
+                    fontSize: '0.85rem', 
+                    color: '#e67e22',
+                    fontWeight: 'bold'
+                  }}>📦 預購</span>
+                )}
+              </h3>
               <div className="cart-item-price">NT$ {item.price.toLocaleString()}</div>
-              <div className="cart-item-stock">庫存：{item.product.stock} 件</div>
+              <div className="cart-item-stock">
+                {item.is_preorder ? '預購中' : `庫存：${item.product.stock} 件`}
+              </div>
             </div>
 
             <div className="cart-item-controls">
@@ -230,12 +243,12 @@ function Cart({ onCartUpdate }) {
                   onBlur={() => handleQuantityInputBlur(item.id)}
                   onKeyPress={(e) => handleQuantityInputKeyPress(e, item.id)}
                   min="0"
-                  max={item.product.stock}
+                  max={item.is_preorder ? undefined : item.product.stock}
                 />
                 <button
                   onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                   className="quantity-btn"
-                  disabled={item.quantity >= item.product.stock}
+                  disabled={!item.is_preorder && item.quantity >= item.product.stock}
                 >
                   +
                 </button>

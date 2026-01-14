@@ -65,6 +65,11 @@ function OrderManagement() {
     ? orders 
     : orders.filter(order => order.status === filterStatus)
 
+  // 檢查訂單是否包含預購商品
+  const hasPreOrderItems = (order) => {
+    return order.items && order.items.some(item => item.is_preorder === true)
+  }
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return '#f39c12'
@@ -169,12 +174,22 @@ function OrderManagement() {
               >
                 <div className="order-header">
                   <div className="order-id">訂單編號：{order.id}</div>
-                  <span
-                    className="order-status"
-                    style={{ backgroundColor: getStatusColor(order.status) }}
-                  >
-                    {getStatusText(order.status)}
-                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span
+                      className="order-status"
+                      style={{ backgroundColor: getStatusColor(order.status) }}
+                    >
+                      {getStatusText(order.status)}
+                    </span>
+                    {hasPreOrderItems(order) && (
+                      <span
+                        className="order-status"
+                        style={{ backgroundColor: '#e67e22', fontSize: '0.85rem', padding: '0.25rem 0.5rem' }}
+                      >
+                        📦 預購
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="order-info">
                   <div className="order-customer">
@@ -284,7 +299,17 @@ function OrderManagement() {
                       />
                     </div>
                     <div className="item-info">
-                      <div className="item-name">{item.name}</div>
+                      <div className="item-name">
+                        {item.name}
+                        {item.is_preorder && (
+                          <span style={{ 
+                            marginLeft: '0.5rem', 
+                            fontSize: '0.75rem', 
+                            color: '#e67e22',
+                            fontWeight: 'bold'
+                          }}>📦 預購</span>
+                        )}
+                      </div>
                       <div className="item-quantity">數量：{item.quantity}</div>
                     </div>
                     <div className="item-price">
