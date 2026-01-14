@@ -14,6 +14,7 @@ import UserOrders from './components/UserOrders'
 import AdminSettings from './components/AdminSettings'
 import OrderManagement from './components/OrderManagement'
 import AnnouncementEditor from './components/AnnouncementEditor'
+import Announcement from './components/Announcement'
 import AdminChat from './components/AdminChat'
 import UserChat from './components/UserChat'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -170,6 +171,7 @@ function AppContent() {
               <>
                 <Link to="/orders" className="nav-link">我的訂單</Link>
                 <Link to="/chat" className="nav-link">💬 聯絡客服</Link>
+                <Link to="/announcement" className="nav-link">📋 公佈欄</Link>
                 <Link to="/" className="nav-link" onClick={handleUserLogout}>
                   登出
                 </Link>
@@ -234,6 +236,14 @@ function AppContent() {
             />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/orders" element={<UserOrders />} />
+            <Route 
+              path="/announcement" 
+              element={
+                <UserProtectedRoute>
+                  <Announcement />
+                </UserProtectedRoute>
+              } 
+            />
             <Route 
               path="/add" 
               element={
