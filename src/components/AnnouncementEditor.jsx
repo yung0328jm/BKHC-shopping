@@ -258,24 +258,34 @@ function AnnouncementEditor() {
               </div>
             )}
 
-            {announcement.paymentInfo && (
-              <div className="preview-item">
-                <div className="preview-label">💳 匯款資訊</div>
-                <div className="preview-content">
-                  {announcement.paymentInfo.split('\n').map((line, index) => (
-                    <div key={index}>{line || '\u00A0'}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {announcement.shippingInfo && (
-              <div className="preview-item">
-                <div className="preview-label">🚚 發貨資訊</div>
-                <div className="preview-content">
-                  {announcement.shippingInfo.split('\n').map((line, index) => (
-                    <div key={index}>{line || '\u00A0'}</div>
-                  ))}
-                </div>
+            {(announcement.paymentInfo || announcement.shippingInfo) && (
+              <div className="preview-grid">
+                {announcement.paymentInfo && (
+                  <div className="preview-grid-item">
+                    <div className="preview-grid-title">
+                      <span>💳</span>
+                      <span>匯款資訊</span>
+                    </div>
+                    <div className="preview-grid-content">
+                      {announcement.paymentInfo.split('\n').map((line, index) => (
+                        <div key={index}>{line || '\u00A0'}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {announcement.shippingInfo && (
+                  <div className="preview-grid-item">
+                    <div className="preview-grid-title">
+                      <span>🚚</span>
+                      <span>發貨資訊</span>
+                    </div>
+                    <div className="preview-grid-content">
+                      {announcement.shippingInfo.split('\n').map((line, index) => (
+                        <div key={index}>{line || '\u00A0'}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {announcement.gridItems.length === 0 && !announcement.paymentInfo && !announcement.shippingInfo && (

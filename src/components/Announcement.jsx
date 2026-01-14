@@ -65,31 +65,34 @@ function Announcement() {
           </div>
         )}
 
-        {announcement.paymentInfo && (
-          <div className="announcement-section">
-            <div className="announcement-section-title">
-              <span className="announcement-icon">💳</span>
-              <h3>匯款資訊</h3>
-            </div>
-            <div className="announcement-content">
-              {announcement.paymentInfo.split('\n').map((line, index) => (
-                <div key={index}>{line || '\u00A0'}</div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {announcement.shippingInfo && (
-          <div className="announcement-section">
-            <div className="announcement-section-title">
-              <span className="announcement-icon">🚚</span>
-              <h3>發貨資訊</h3>
-            </div>
-            <div className="announcement-content">
-              {announcement.shippingInfo.split('\n').map((line, index) => (
-                <div key={index}>{line || '\u00A0'}</div>
-              ))}
-            </div>
+        {(announcement.paymentInfo || announcement.shippingInfo) && (
+          <div className="announcement-grid">
+            {announcement.paymentInfo && (
+              <div className="announcement-grid-item">
+                <div className="announcement-grid-item-title">
+                  <span className="announcement-icon">💳</span>
+                  <span>匯款資訊</span>
+                </div>
+                <div className="announcement-grid-item-content">
+                  {announcement.paymentInfo.split('\n').map((line, index) => (
+                    <div key={index}>{line || '\u00A0'}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {announcement.shippingInfo && (
+              <div className="announcement-grid-item">
+                <div className="announcement-grid-item-title">
+                  <span className="announcement-icon">🚚</span>
+                  <span>發貨資訊</span>
+                </div>
+                <div className="announcement-grid-item-content">
+                  {announcement.shippingInfo.split('\n').map((line, index) => (
+                    <div key={index}>{line || '\u00A0'}</div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
