@@ -62,6 +62,29 @@ export const decreaseProductStock = async (productId, quantity) => {
   return data
 }
 
+// 增加商品庫存（用於取消訂單，補回庫存）
+export const increaseProductStock = async (productId, quantity) => {
+  // 先查詢當前庫存
+  const { data: product, error: fetchError } = await supabase
+    .from('products')
+    .select('stock')
+    .eq('id', productId)
+    .single()
+  
+  if (fetchError) throw fetchError
+  
+  // 更新庫存
+  const { data, error } = await supabase
+    .from('products')
+    .update({ stock: product.stock + quantity })
+    .eq('id', productId)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
 export const deleteProductById = async (id) => {
   const { error } = await supabase
     .from('products')
@@ -206,6 +229,31 @@ export const fetchAllOrders = async () => {
 }
 
 export const updateOrderStatus = async (orderId, status) => {
+  // 先獲取訂單的原始狀態和商品資訊
+  const { data: currentOrder, error: fetchError } = await supabase
+    .from('orders')
+    .select('status, items')
+    .eq('id', orderId)
+    .single()
+  
+  if (fetchError) throw fetchError
+  
+  // 如果訂單從非取消狀態變為取消狀態，需要補回庫存
+  if (currentOrder.status !== 'cancelled' && status === 'cancelled') {
+    // 遍歷訂單商品，補回庫存（預購商品跳過）
+    for (const item of currentOrder.items || []) {
+      if (!item.is_preorder) {
+        try {
+          await increaseProductStock(item.id, item.quantity)
+        } catch (error) {
+          console.error(`補回商品 ${item.id} 庫存失敗:`, error)
+          // 繼續處理其他商品，不中斷整個流程
+        }
+      }
+    }
+  }
+  
+  // 更新訂單狀態
   const { data, error } = await supabase
     .from('orders')
     .update({ status })
