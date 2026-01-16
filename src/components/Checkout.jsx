@@ -80,44 +80,67 @@ function Checkout() {
 
   // 當配送方式改變時，更新運費
   useEffect(() => {
+    let isMounted = true
+    let channel = null
+    
     const loadShippingFee = async () => {
       if (!formData.deliveryMethod) {
-        setShippingFee(0)
+        if (isMounted) {
+          setShippingFee(0)
+        }
         return
       }
       try {
         const fee = await getFeeByDeliveryMethod(formData.deliveryMethod)
-        console.log('計算運費 - 配送方式:', formData.deliveryMethod, '運費:', fee)
-        setShippingFee(fee || 0)
+        if (isMounted) {
+          console.log('計算運費 - 配送方式:', formData.deliveryMethod, '運費:', fee)
+          setShippingFee(fee || 0)
+        }
       } catch (error) {
         console.error('獲取運費失敗:', error)
-        setShippingFee(0)
+        // 即使出錯也設置為 0，避免頁面崩潰
+        if (isMounted) {
+          setShippingFee(0)
+        }
       }
     }
+    
     loadShippingFee()
     
-    // 訂閱運費更新（實現即時同步）
-    const channel = supabase
-      .channel('shipping-fees-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'shipping_fees'
-        },
-        (payload) => {
-          console.log('運費已更新:', payload)
-          // 如果已選擇配送方式，重新載入運費
-          if (formData.deliveryMethod) {
-            loadShippingFee()
+    // 訂閱運費更新（實現即時同步）- 添加錯誤處理
+    try {
+      channel = supabase
+        .channel(`shipping-fees-changes-${Date.now()}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'shipping_fees'
+          },
+          (payload) => {
+            console.log('運費已更新:', payload)
+            // 如果已選擇配送方式，重新載入運費
+            if (formData.deliveryMethod && isMounted) {
+              loadShippingFee()
+            }
           }
-        }
-      )
-      .subscribe()
+        )
+        .subscribe()
+    } catch (error) {
+      console.error('訂閱運費更新失敗（將使用定期檢查）:', error)
+      // Realtime 訂閱失敗不影響基本功能
+    }
     
     return () => {
-      supabase.removeChannel(channel)
+      isMounted = false
+      if (channel) {
+        try {
+          supabase.removeChannel(channel)
+        } catch (error) {
+          console.error('移除訂閱失敗:', error)
+        }
+      }
     }
   }, [formData.deliveryMethod])
 
