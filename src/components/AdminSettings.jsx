@@ -25,12 +25,20 @@ function AdminSettings() {
   const [message, setMessage] = useState({ type: '', text: '' })
 
   useEffect(() => {
-    const shippingFee = getShippingFee()
-    setShippingFeeForm({
-      fee711: shippingFee['711賣貨便'] || '',
-      feeHome: shippingFee['宅配'] || '',
-      feePickup: shippingFee['面交'] || ''
-    })
+    const loadShippingFee = async () => {
+      try {
+        const shippingFee = await getShippingFee()
+        setShippingFeeForm({
+          fee711: shippingFee['711賣貨便'] || '',
+          feeHome: shippingFee['宅配'] || '',
+          feePickup: shippingFee['面交'] || ''
+        })
+      } catch (error) {
+        console.error('載入運費設定失敗:', error)
+        setMessage({ type: 'error', text: '載入運費設定失敗，請稍後再試' })
+      }
+    }
+    loadShippingFee()
   }, [])
 
   const handlePasswordChange = (e) => {
@@ -60,7 +68,7 @@ function AdminSettings() {
     setMessage({ type: '', text: '' })
   }
 
-  const handleShippingFeeSubmit = (e) => {
+  const handleShippingFeeSubmit = async (e) => {
     e.preventDefault()
     
     if (shippingFeeForm.fee711 === '' || shippingFeeForm.feeHome === '' || shippingFeeForm.feePickup === '') {
@@ -77,8 +85,17 @@ function AdminSettings() {
       return
     }
 
-    updateShippingFee(fee711, feeHome, feePickup)
-    setMessage({ type: 'success', text: '運費設定已成功更新！' })
+    try {
+      await updateShippingFee(fee711, feeHome, feePickup)
+      setMessage({ type: 'success', text: '運費設定已成功更新！所有設備將同步更新。' })
+      
+      setTimeout(() => {
+        setMessage({ type: '', text: '' })
+      }, 3000)
+    } catch (error) {
+      console.error('更新運費設定失敗:', error)
+      setMessage({ type: 'error', text: `更新失敗：${error.message || '請稍後再試'}` })
+    }
   }
 
   const handlePasswordSubmit = (e) => {

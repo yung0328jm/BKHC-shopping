@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchCartByUser, clearCartByUser } from '../utils/supabaseApi'
 import { decreaseProductStock } from '../utils/supabaseApi'
@@ -6,6 +6,7 @@ import { createOrder } from '../utils/supabaseApi'
 import { getAnnouncement } from '../utils/announcement'
 import { getCurrentUserId, getCurrentUser } from '../utils/supabaseAuth'
 import { getFeeByDeliveryMethod } from '../utils/shippingFee'
+import { supabase } from '../utils/supabaseClient'
 import './Checkout.css'
 
 function Checkout() {
@@ -21,6 +22,7 @@ function Checkout() {
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [announcement, setAnnouncement] = useState(null)
+  const [shippingFee, setShippingFee] = useState(0)
 
   useEffect(() => {
     const loadAnnouncement = async () => {
@@ -75,6 +77,49 @@ function Checkout() {
 
     loadCart()
   }, [navigate])
+
+  // 當配送方式改變時，更新運費
+  useEffect(() => {
+    const loadShippingFee = async () => {
+      if (!formData.deliveryMethod) {
+        setShippingFee(0)
+        return
+      }
+      try {
+        const fee = await getFeeByDeliveryMethod(formData.deliveryMethod)
+        console.log('計算運費 - 配送方式:', formData.deliveryMethod, '運費:', fee)
+        setShippingFee(fee || 0)
+      } catch (error) {
+        console.error('獲取運費失敗:', error)
+        setShippingFee(0)
+      }
+    }
+    loadShippingFee()
+    
+    // 訂閱運費更新（實現即時同步）
+    const channel = supabase
+      .channel('shipping-fees-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipping_fees'
+        },
+        (payload) => {
+          console.log('運費已更新:', payload)
+          // 如果已選擇配送方式，重新載入運費
+          if (formData.deliveryMethod) {
+            loadShippingFee()
+          }
+        }
+      )
+      .subscribe()
+    
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [formData.deliveryMethod])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -157,11 +202,12 @@ function Checkout() {
         return
       }
       
-      const shippingFee = getFeeByDeliveryMethod(formData.deliveryMethod)
-      const totalPrice = subtotal + shippingFee
+      // 重新獲取運費以確保使用最新值
+      const currentShippingFee = await getFeeByDeliveryMethod(formData.deliveryMethod)
+      const totalPrice = subtotal + currentShippingFee
       
       // 調試：確認提交時的運費
-      console.log('提交訂單 - 配送方式:', formData.deliveryMethod, '運費:', shippingFee, '總金額:', totalPrice)
+      console.log('提交訂單 - 配送方式:', formData.deliveryMethod, '運費:', currentShippingFee, '總金額:', totalPrice)
       
       const order = {
         user_id: userId,
@@ -175,7 +221,7 @@ function Checkout() {
         })),
         customer_info: formData,
         subtotal: subtotal,
-        shipping_fee: shippingFee,
+        shipping_fee: currentShippingFee,
         total: totalPrice,
         status: 'pending',
         payment_method: formData.paymentMethod
@@ -215,15 +261,7 @@ function Checkout() {
   // 計算小計
   const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
   
-  // 計算運費（根據選擇的配送方式）- 使用 useMemo 確保響應式更新
-  const shippingFee = useMemo(() => {
-    if (!formData.deliveryMethod) return 0
-    const fee = getFeeByDeliveryMethod(formData.deliveryMethod)
-    console.log('計算運費 - 配送方式:', formData.deliveryMethod, '運費:', fee)
-    return fee || 0
-  }, [formData.deliveryMethod])
-  
-  // 計算總金額
+  // 計算總金額（運費已通過 useEffect 更新）
   const totalPrice = subtotal + shippingFee
 
   if (cartItems.length === 0) {
