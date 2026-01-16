@@ -9,12 +9,12 @@ export const getShippingFee = async () => {
       .select('*')
       .order('updated_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle() // 使用 maybeSingle 而不是 single，避免表不存在時報錯
     
     if (error) {
-      // 如果表不存在或查詢失敗，返回預設值
-      console.error('獲取運費設定失敗:', error)
-      return getDefaultShippingFee()
+      // 如果表不存在或查詢失敗，使用後備方案
+      console.warn('獲取運費設定失敗，使用後備方案:', error.message)
+      return getShippingFeeSync()
     }
     
     if (data) {
@@ -27,10 +27,11 @@ export const getShippingFee = async () => {
       }
     }
     
-    return getDefaultShippingFee()
+    // 如果沒有數據，使用後備方案
+    return getShippingFeeSync()
   } catch (error) {
-    console.error('獲取運費設定異常:', error)
-    return getDefaultShippingFee()
+    console.warn('獲取運費設定異常，使用後備方案:', error)
+    return getShippingFeeSync()
   }
 }
 
@@ -114,10 +115,16 @@ export const updateShippingFee = async (fee711, feeHome, feePickup) => {
   }
 }
 
-// 根據配送方式獲取運費（異步版本）
+// 根據配送方式獲取運費（異步版本，帶錯誤處理）
 export const getFeeByDeliveryMethod = async (deliveryMethod) => {
-  const shippingFee = await getShippingFee()
-  return shippingFee[deliveryMethod] || 0
+  try {
+    const shippingFee = await getShippingFee()
+    return shippingFee[deliveryMethod] || 0
+  } catch (error) {
+    console.error('獲取運費失敗，使用後備方案:', error)
+    // 如果數據庫查詢失敗，使用同步版本作為後備
+    return getFeeByDeliveryMethodSync(deliveryMethod)
+  }
 }
 
 // 根據配送方式獲取運費（同步版本，用於後備）
