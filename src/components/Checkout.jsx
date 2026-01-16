@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchCartByUser, clearCartByUser } from '../utils/supabaseApi'
 import { decreaseProductStock } from '../utils/supabaseApi'
@@ -150,8 +150,18 @@ function Checkout() {
 
       // 创建订单记录
       const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+      
+      // 確保使用當前選擇的配送方式計算運費
+      if (!formData.deliveryMethod) {
+        alert('請選擇配送方式')
+        return
+      }
+      
       const shippingFee = getFeeByDeliveryMethod(formData.deliveryMethod)
       const totalPrice = subtotal + shippingFee
+      
+      // 調試：確認提交時的運費
+      console.log('提交訂單 - 配送方式:', formData.deliveryMethod, '運費:', shippingFee, '總金額:', totalPrice)
       
       const order = {
         user_id: userId,
@@ -202,8 +212,18 @@ function Checkout() {
     }
   }
 
+  // 計算小計
   const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
-  const shippingFee = formData.deliveryMethod ? getFeeByDeliveryMethod(formData.deliveryMethod) : 0
+  
+  // 計算運費（根據選擇的配送方式）- 使用 useMemo 確保響應式更新
+  const shippingFee = useMemo(() => {
+    if (!formData.deliveryMethod) return 0
+    const fee = getFeeByDeliveryMethod(formData.deliveryMethod)
+    console.log('計算運費 - 配送方式:', formData.deliveryMethod, '運費:', fee)
+    return fee || 0
+  }, [formData.deliveryMethod])
+  
+  // 計算總金額
   const totalPrice = subtotal + shippingFee
 
   if (cartItems.length === 0) {
